@@ -43,3 +43,13 @@ yarn test:unit
 ```sh
 yarn lint
 ```
+
+### Built image for Docker
+```sh
+docker build -t task-manager-frontend .
+```
+
+### Run Docker container
+```sh
+docker run -p 80:80 task-manager-frontend
+```
