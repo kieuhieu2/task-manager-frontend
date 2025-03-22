@@ -1,6 +1,5 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:8080/users';
+import { post } from '@/utils/httpRequest';
+import type { ApiResponse } from '@/types/api.ts'
 
 export const createUser = async (userData: {
   username: string;
@@ -10,11 +9,12 @@ export const createUser = async (userData: {
   dob: string;
 }) => {
   try {
-    const response = await axios.post(API_URL, userData);
-    if (response.data.code === 1000) {
-      return response.data.result;
+    const response: ApiResponse = await post('/users', userData);
+
+    if (response.code === 1000) {
+      return response.result;
     } else {
-      throw new Error('Lỗi API');
+      return response;
     }
   } catch (error) {
     console.error('Lỗi khi gọi API:', error);

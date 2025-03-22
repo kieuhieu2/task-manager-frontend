@@ -1,4 +1,7 @@
 {
+  "compilerOptions": {
+    "moduleResolution": "node16"
+  },
   "files": [],
   "references": [
     {
@@ -10,5 +13,7 @@
     {
       "path": "./tsconfig.vitest.json"
     }
+
   ]
 }
+

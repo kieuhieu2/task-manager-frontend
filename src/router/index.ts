@@ -1,7 +1,8 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import { permissions } from './permissions';
-import CreateUser from '@/views/CreateUser/CreateUser.vue'
+import { createRouter, createWebHistory } from 'vue-router';
+import HomeView from '../views/HomeView.vue';
+import { permissions } from '@/router/permissions.js';
+import CreateUser from '@/views/CreateUser/createUser.vue';
+import LoginPage from '@/views/Auth/loginPage.vue';
 
 const   routes = [
     {
@@ -13,7 +14,12 @@ const   routes = [
     path: '/create-user',
     name: 'create-user',
     component: CreateUser,
-    // meta: { requiresAuth: true, allowedRoles: ['admin'] },
+    meta: { requiresAuth: true, allowedRoles: ['admin'] },
+  },
+  {
+    path: '/login',
+    name: 'loginPage',
+    component: LoginPage,
   }
   ];
 

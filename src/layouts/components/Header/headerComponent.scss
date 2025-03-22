@@ -1,0 +1,122 @@
+
+$header-height: 60px;
+$horizontal-spacer: 24px;
+$gray-200: #e5e7eb;
+$gray-800: #1f2937;
+
+// Style cho header
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: $header-height;
+  background-color: $gray-200;
+  border-radius: 9999px; // Tương ứng rounded-full
+  margin-left: $horizontal-spacer;
+  margin-right: $horizontal-spacer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 16px; // Tương ứng px-4
+  padding-right: 16px;
+  z-index: 10; // Đảm bảo header nằm trên các phần tử khác
+
+  &__title {
+    font-size: 18px; // Tương ứng text-lg
+    font-weight: 600; // Tương ứng font-semibold
+    color: $gray-800;
+  }
+
+  // Style cho nhóm lựa chọn
+  &__group-selector {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: whitesmoke;
+    border: 2px solid #e5e7eb;
+    border-radius: 20px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    color: $gray-800;
+    transition: background 0.2s;
+
+    &:hover {
+      background: #f3f4f6;
+    }
+
+    .arrow-down {
+      font-size: 14px;
+      margin-left: 8px;
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: 50px;
+      left: 0;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      width: 180px;
+      list-style: none;
+      padding: 8px 0;
+      display: flex;
+      flex-direction: column;
+
+      li {
+        padding: 10px 16px;
+        cursor: pointer;
+        transition: background 0.2s;
+
+        &:hover {
+          background: #f3f4f6;
+        }
+      }
+    }
+  }
+
+  // Style cho nút menu
+  .menu-container {
+    position: relative;
+
+    .menu-button {
+      background-color: white;
+      border: 2px solid #e5e7eb;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 24px;
+      text-align: center;
+      line-height: 36px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      //box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .menu-dropdown {
+      position: absolute;
+      right: 0;
+      top: 50px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      width: 180px;
+      list-style: none;
+      padding: 8px 0;
+
+      li {
+        padding: 10px 16px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      li:hover {
+        background: #f3f4f6;
+      }
+    }
+  }
+}
