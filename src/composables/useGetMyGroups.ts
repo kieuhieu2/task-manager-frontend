@@ -1,6 +1,6 @@
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
-import { useGetMyGroupsStore } from "@/store/getMyGroups.js";
+import { useGetMyGroupsStore } from "@/stores/getMyGroups.js";
 
 export const useGetMyGroups = () => {
   const router = useRouter();

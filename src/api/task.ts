@@ -9,7 +9,7 @@ export async function fetchTasks(groupId: number): Promise<Task[]> {
 // Cập nhật trạng thái task
 export async function updateTaskState(taskId: number, newState: string) {
   await put(
-    "/tasks/update-state/${taskId}/${newState}",
-
+    `/tasks/update-state/${taskId}/${newState}`,
+    {}
   );
 }

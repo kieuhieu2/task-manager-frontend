@@ -8,7 +8,7 @@
         class="list-group"
         :list="list1"
         group="tasks"
-        @change="log"
+        @change="(event) => log(event, TaskState.TODO)"
         itemKey="taskId"
       >
         <template #item="{ element }">
@@ -27,7 +27,7 @@
         class="list-group"
         :list="list2"
         group="tasks"
-        @change="log"
+        @change="(event) => log(event, TaskState.IN_PROGRESS)"
         itemKey="taskId"
       >
         <template #item="{ element }">
@@ -46,7 +46,7 @@
         class="list-group"
         :list="list3"
         group="tasks"
-        @change="log"
+        @change="(event) => log(event, TaskState.DONE)"
         itemKey="taskId"
       >
         <template #item="{ element }">
@@ -65,7 +65,7 @@
         class="list-group"
         :list="list4"
         group="tasks"
-        @change="log"
+        @change="(event) => log(event, TaskState.SPAM)"
         itemKey="taskId"
       >
         <template #item="{ element }">
@@ -86,7 +86,8 @@ import { useRoute } from "vue-router";
 import HeaderOnly from "@/layouts/HeaderOnly/headerOnly.vue";
 import { useTaskManager } from "@/composables/uesTaskManager.js";
 import Draggable from "vuedraggable";
-import { useTaskStore } from '@/store/taskManager.js'
+import { useTaskStore } from '@/stores/taskManager.js'
+import { TaskState } from '@/types/task.js'
 
 const route = useRoute();
 

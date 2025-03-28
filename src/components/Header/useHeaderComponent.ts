@@ -1,7 +1,7 @@
 // @/components/Header/useHeaderComponent.ts
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { useGetMyGroupsStore } from '@/store/getMyGroups.js';
+import { useGetMyGroupsStore } from '@/stores/getMyGroups.js';
 import type { Group } from '@/types/group.js';
 
 export const useHeaderComponent = () => {
@@ -13,7 +13,7 @@ export const useHeaderComponent = () => {
   const menuOpen = ref(false);
   const selectedGroupId = ref<number | null>(null); // Lưu groupId của nhóm được chọn
 
-  // Lấy danh sách nhóm từ store
+  // Lấy danh sách nhóm từ stores
   const groups = computed(() => store.groups);
 
   // Tính toán tên nhóm được chọn để hiển thị trong header

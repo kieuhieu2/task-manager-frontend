@@ -1,4 +1,4 @@
-// src/store/useTaskStore.js
+// src/stores/useTaskStore.js
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { fetchTasks, updateTaskState } from "@/api/task.js";
@@ -10,8 +10,8 @@ export const useTaskStore = defineStore("taskStore", () => {
   // Tải danh sách task theo groupId
   const loadTasks = async (groupId: number) => {
     try {
-      const response = await fetchTasks(groupId);  // Gọi API lấy danh sách task
-      tasks.value = response;  // Lưu danh sách task vào store
+      const response = await fetchTasks(groupId);
+      tasks.value = response;
     } catch (error) {
       console.error("Lỗi khi tải danh sách task:", error);
     }
@@ -19,7 +19,6 @@ export const useTaskStore = defineStore("taskStore", () => {
 
   const updateTask = async (taskId: number, newState: TaskState) => {
     try {
-      // Gọi API để cập nhật trạng thái task
       await updateTaskState(taskId, newState);
 
       // Cập nhật trạng thái task trong local state

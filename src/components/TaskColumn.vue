@@ -12,7 +12,7 @@
 <script setup lang="ts">
 import draggable from "vuedraggable";
 import TaskItem from "./TaskItem.vue";
-import { useTaskStore } from "@/store/taskStore";
+import { useTaskStore } from "@/stores/taskStore";
 import type { Task } from "@/types/task";
 import { computed } from 'vue'
 
