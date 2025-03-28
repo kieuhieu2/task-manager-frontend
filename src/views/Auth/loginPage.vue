@@ -1,6 +1,6 @@
 <template>
   <div class="login-container">
-    <form @submit.prevent="handleLogin">
+    <form @submit.prevent="login">
       <h3>Quản lý công việc</h3>
 
       <label for="username">Tài khoản</label>
@@ -42,23 +42,23 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { useLogin } from '@/views/Auth/useLoginPage.js';
+import { useLogin } from '@/composables/useLogin.js'
 
 export default defineComponent({
   name: 'LoginForm',
   setup() {
-    const { form, isLoading, error, handleLogin } = useLogin();
+    const { form, isLoading, error, login } = useLogin();
 
     return {
       form,
       isLoading,
       error,
-      handleLogin,
+      login,
     };
   },
 });
 </script>
 
 <style lang="scss" scoped>
-@import './login.module.scss';
+@use './login.module.scss';
 </style>

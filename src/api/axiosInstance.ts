@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
 
-const httpRequest = axios.create({
+const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL,
   timeout: 10000,
   headers: {
@@ -10,24 +10,38 @@ const httpRequest = axios.create({
   },
 });
 
+// Thêm token vào header trước khi gửi request
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 export const post = async <T>(path: string, data: unknown, options: AxiosRequestConfig = {}): Promise<T> => {
-  const response: AxiosResponse<T> = await httpRequest.post(path, data, options);
+  const response: AxiosResponse<T> = await axiosInstance.post(path, data, options);
   return response.data;
 };
 
 export const get = async <T>(path: string, options: AxiosRequestConfig = {}): Promise<T> => {
-  const response: AxiosResponse<T> = await httpRequest.get(path, options);
+  const response: AxiosResponse<T> = await axiosInstance.get(path, options);
   return response.data;
 };
 
 export const put = async <T>(path: string, data: unknown, options: AxiosRequestConfig = {}): Promise<T> => {
-  const response: AxiosResponse<T> = await httpRequest.put(path, data, options);
+  const response: AxiosResponse<T> = await axiosInstance.put(path, data, options);
   return response.data;
 };
 
 export const deleteRequest = async <T>(path: string, options: AxiosRequestConfig = {}): Promise<T> => {
-  const response: AxiosResponse<T> = await httpRequest.delete(path, options);
+  const response: AxiosResponse<T> = await axiosInstance.delete(path, options);
   return response.data;
 };
 
-export default httpRequest;
+export default axiosInstance;

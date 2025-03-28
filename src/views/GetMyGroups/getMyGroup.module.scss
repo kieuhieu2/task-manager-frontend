@@ -1,0 +1,52 @@
+.group-container {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 5 cột đều nhau */
+  gap: 20px; /* Khoảng cách giữa các ô */
+  padding: 20px; /* Padding xung quanh container */
+  max-width: 1200px; /* Giới hạn chiều rộng tối đa */
+  margin: 60px auto; /* Căn giữa và thêm khoảng cách trên */
+}
+
+.group-item {
+  background-color: #f5f5f5; /* Màu nền ô */
+  border-radius: 8px; /* Bo góc */
+  padding: 15px; /* Padding bên trong ô */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Đổ bóng nhẹ */
+  display: flex;
+  flex-direction: column; /* Sắp xếp dọc: button trên, mô tả dưới */
+  height: 350px; /* Chiều cao cố định */
+  transition: transform 0.2s ease; /* Hiệu ứng hover mượt mà */
+
+  &:hover {
+    transform: translateY(-5px); /* Nâng ô lên khi hover */
+  }
+}
+
+.group-button {
+  background-color: #007bff; /* Màu nền nút */
+  color: white; /* Màu chữ */
+  border: none; /* Bỏ viền */
+  padding: 10px 15px; /* Padding nút */
+  border-radius: 5px; /* Bo góc nút */
+  cursor: pointer; /* Con trỏ tay khi hover */
+  font-size: 16px; /* Cỡ chữ */
+  font-weight: 500; /* Độ đậm chữ */
+  text-align: center; /* Căn giữa chữ trong nút */
+  transition: background-color 0.2s ease; /* Hiệu ứng đổi màu mượt mà */
+
+  &:hover {
+    background-color: #0056b3; /* Màu đậm hơn khi hover */
+  }
+}
+
+.group-description {
+  font-size: 14px; /* Cỡ chữ mô tả */
+  color: #333; /* Màu chữ */
+  margin-top: 10px; /* Khoảng cách giữa nút và mô tả */
+  overflow: hidden; /* Ẩn nội dung tràn */
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+}

@@ -1,4 +1,4 @@
-import { post } from '@/utils/httpRequest.js';
+import { post } from '@/api/axiosInstance.js';
 import type { ApiResponse } from '@/types/api.ts'
 
 export const createUser = async (userData: {

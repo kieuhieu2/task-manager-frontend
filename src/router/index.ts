@@ -3,6 +3,9 @@ import HomeView from '../views/HomeView.vue';
 import { permissions } from '@/router/permissions.js';
 import CreateUser from '@/views/CreateUser/createUser.vue';
 import LoginPage from '@/views/Auth/loginPage.vue';
+import GetMyGroups from '@/views/GetMyGroups/getMyGroups.vue';
+import GroupDetails from '@/views/GroupDetails/groupDetails.vue';
+import TaskManager from '@/views/TaskManager/taskManager.vue';
 
 const   routes = [
     {
@@ -20,7 +23,22 @@ const   routes = [
     path: '/login',
     name: 'loginPage',
     component: LoginPage,
-  }
+  },
+  {
+    path: "/get-my-groups",
+    name: 'getMyGroups',
+    component: GetMyGroups,
+  },
+  {
+    path: '/group-details/:id',
+    name: 'groupDetails',
+    component: GroupDetails,
+  },
+  {
+    path: '/task-manager/:groupId',
+    name: 'taskManager',
+    component: TaskManager
+  },
   ];
 
 const router = createRouter({
