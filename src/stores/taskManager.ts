@@ -1,34 +1,46 @@
-// src/stores/useTaskStore.js
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { fetchTasks, updateTaskState } from "@/api/task.js";
-import type { Task, TaskState } from "@/types/task.js";
+import { updateTaskState } from "@/api/task.js";
+import type { Task } from "@/types/task.js";
+import { get} from '@/api/axiosInstance.js';
+import type { ApiResponse } from '@/types/api.js'
 
-export const useTaskStore = defineStore("taskStore", () => {
-  const tasks = ref<Task[]>([]);
+export const useTaskStore = defineStore('taskStore', () => {
+  const tasksByGroup = ref<{ [groupId: number]: Task[] }>({});
 
-  // Tải danh sách task theo groupId
   const loadTasks = async (groupId: number) => {
-    try {
-      const response = await fetchTasks(groupId);
-      tasks.value = response;
-    } catch (error) {
-      console.error("Lỗi khi tải danh sách task:", error);
+    if (!tasksByGroup.value[groupId]) {
+      try {
+        const response = await get(`tasks/${groupId}`);
+        tasksByGroup.value[groupId] = await response.result;
+      } catch (error) {
+        console.error('Error loading tasks:', error);
+      }
     }
   };
 
-  const updateTask = async (taskId: number, newState: TaskState) => {
-    try {
-      await updateTaskState(taskId, newState);
+  const getTasksForGroup = (groupId: number) => {
+    return tasksByGroup.value[groupId] || [];
+  };
 
-      // Cập nhật trạng thái task trong local state
-      const task = tasks.value.find((t) => t.taskId === taskId);
-      if (task) task.state = newState;
-    } catch (error) {
-      console.error("Lỗi khi cập nhật trạng thái task:", error);
-      throw new Error("Không thể cập nhật trạng thái task");
+  const updateTask = async (groupId: number, taskId: number, newState: string) => {
+    const tasks = tasksByGroup.value[groupId];
+    if (tasks) {
+      const task = tasks.find(t => t.taskId === taskId);
+      if (task) {
+        task.state = newState;
+        try {
+          await updateTaskState(taskId, newState);
+        } catch (error) {
+          console.error('Error updating task state:', error);
+        }
+      } else {
+        console.error('Task not found in group:', taskId, groupId);
+      }
+    } else {
+      console.error('Group not found:', groupId);
     }
   };
 
-  return { tasks, loadTasks, updateTask };
+  return { tasksByGroup, loadTasks, getTasksForGroup, updateTask };
 });

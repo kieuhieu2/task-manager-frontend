@@ -88,25 +88,37 @@ import { useTaskManager } from "@/composables/uesTaskManager.js";
 import Draggable from "vuedraggable";
 import { useTaskStore } from '@/stores/taskManager.js'
 import { TaskState } from '@/types/task.js'
+import { watch } from 'vue';
 
 const route = useRoute();
+const taskStore = useTaskStore();
 
+// Define groupId as a computed property
 const groupId = computed(() => {
   const id = Number(route.params.groupId);
   return isNaN(id) ? null : id;
 });
 
-const taskStore = useTaskStore();
+// Pass groupId to useTaskManager
+const { list1, list2, list3, list4, log } = useTaskManager(groupId);
 
-onMounted(() => {
-  if (groupId.value) {
-    taskStore.loadTasks(groupId.value);
+// Watch for groupId changes to load tasks
+watch(groupId, (newGroupId) => {
+  if (newGroupId !== null) {
+    taskStore.loadTasks(newGroupId);
   } else {
     console.error("Group ID không hợp lệ");
   }
 });
 
-const { list1, list2, list3, list4, log } = useTaskManager();
+// Load tasks on mount
+onMounted(() => {
+  if (groupId.value !== null) {
+    taskStore.loadTasks(groupId.value);
+  } else {
+    console.error("Group ID không hợp lệ");
+  }
+});
 </script>
 
 <style scoped lang="scss">
