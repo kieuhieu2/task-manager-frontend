@@ -1,9 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { updateTaskState } from "@/api/task.js";
-import type { Task } from "@/types/task.js";
-import { get} from '@/api/axiosInstance.js';
-import type { ApiResponse } from '@/types/api.js'
+import { fetchTasks, updateTaskState, updateTask, deleteTask } from '@/api/task.js'
+import { type Task, TaskState } from '@/types/task.js'
 
 export const useTaskStore = defineStore('taskStore', () => {
   const tasksByGroup = ref<{ [groupId: number]: Task[] }>({});
@@ -11,8 +9,12 @@ export const useTaskStore = defineStore('taskStore', () => {
   const loadTasks = async (groupId: number) => {
     if (!tasksByGroup.value[groupId]) {
       try {
-        const response = await get(`tasks/${groupId}`);
-        tasksByGroup.value[groupId] = await response.result;
+        const tasks = (await fetchTasks(groupId)) ?? [];
+        tasksByGroup.value[groupId] = tasks.map(task => ({
+          ...task,
+          fileUrl: task.fileUrl || undefined,
+          fileType: typeof task.fileType === 'string' ? task.fileType : undefined
+        })) as Task[];
       } catch (error) {
         console.error('Error loading tasks:', error);
       }
@@ -23,24 +25,69 @@ export const useTaskStore = defineStore('taskStore', () => {
     return tasksByGroup.value[groupId] || [];
   };
 
-  const updateTask = async (groupId: number, taskId: number, newState: string) => {
+  const updateStateOfTask = async (groupId: number, updatedTask: Task) => {
     const tasks = tasksByGroup.value[groupId];
     if (tasks) {
-      const task = tasks.find(t => t.taskId === taskId);
-      if (task) {
-        task.state = newState;
+      const taskIndex = tasks.findIndex(t => t.taskId === updatedTask.taskId);
+      if (taskIndex !== -1) {
+        tasks[taskIndex] = { ...updatedTask };
         try {
-          await updateTaskState(taskId, newState);
+          // Chỉ truyền taskId và state vào updateTaskState
+          await updateTaskState(updatedTask.taskId, updatedTask.state);
         } catch (error) {
           console.error('Error updating task state:', error);
         }
       } else {
-        console.error('Task not found in group:', taskId, groupId);
+        console.error('Task not found:', updatedTask.taskId, 'in group:', groupId);
       }
     } else {
       console.error('Group not found:', groupId);
     }
   };
 
-  return { tasksByGroup, loadTasks, getTasksForGroup, updateTask };
+  const updateTaskInStore = async (groupId: number, updatedTask: Task) => {
+    const tasks = tasksByGroup.value[groupId];
+    if (tasks) {
+      const taskIndex = tasks.findIndex(t => t.taskId === updatedTask.taskId);
+      if (taskIndex !== -1) {
+        try {
+          const returnedTask = await updateTask(updatedTask.taskId, updatedTask); // Gọi API updateTask
+          tasks[taskIndex] = { ...returnedTask }; // Cập nhật từ dữ liệu trả về
+        } catch (error) {
+          console.error('Error updating task:', error);
+        }
+      } else {
+        console.error('Task not found:', updatedTask.taskId, 'in group:', groupId);
+      }
+    } else {
+      console.error('Group not found:', groupId);
+    }
+  };
+
+  const deleteTaskFromStore = async (groupId: number, taskId: number) => {
+    const tasks = tasksByGroup.value[groupId];
+    if (tasks) {
+      const taskIndex = tasks.findIndex(t => t.taskId === taskId);
+      if (taskIndex !== -1) {
+        try {
+          await deleteTask(taskId); // Gọi API deleteTask
+          tasks.splice(taskIndex, 1); // Xóa task khỏi danh sách
+        } catch (error) {
+          console.error('Error deleting task:', error);
+        }
+      } else {
+        console.error('Task not found:', taskId, 'in group:', groupId);
+      }
+    } else {
+      console.error('Group not found:', groupId);
+    }
+  };
+
+  return { tasksByGroup,
+    loadTasks,
+    getTasksForGroup,
+    updateStateOfTask,
+    updateTask: updateTaskInStore,
+    deleteTask: deleteTaskFromStore,
+  };
 });

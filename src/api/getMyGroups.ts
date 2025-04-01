@@ -1,5 +1,3 @@
-import axios from "axios";
-import type { ApiResponse } from "@/types/api.js";
 import type { ApiGroupResponse, Group } from '@/types/group.js'
 import { get } from "./axiosInstance.js";
 
@@ -18,7 +16,8 @@ export async function fetchGetMyGroups(): Promise<Group[]> {
         },
       }
     );
-    return res.result || [];
+    return res.result;
+
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Không thể lấy danh sách nhóm');
   }

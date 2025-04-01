@@ -12,7 +12,9 @@
         itemKey="taskId"
       >
         <template #item="{ element }">
-          <div class="list-group-item">
+          <div class="list-group-item"
+               @click="openTaskDetails(groupId, element.taskId)"
+          >
             <h5>{{ element.title }}</h5>
             <p>{{ element.description }}</p>
             <p>{{ element.percentDone }}%</p>
@@ -31,7 +33,9 @@
         itemKey="taskId"
       >
         <template #item="{ element }">
-          <div class="list-group-item">
+          <div class="list-group-item"
+               @click="openTaskDetails(groupId, element.taskId)"
+          >
             <h5>{{ element.title }}</h5>
             <p>{{ element.description }}</p>
             <p>{{ element.percentDone }}%</p>
@@ -50,7 +54,9 @@
         itemKey="taskId"
       >
         <template #item="{ element }">
-          <div class="list-group-item">
+          <div class="list-group-item"
+            @click="openTaskDetails(groupId, element.taskId)"
+          >
             <h5>{{ element.title }}</h5>
             <p>{{ element.description }}</p>
             <p>{{ element.percentDone }}%</p>
@@ -69,7 +75,9 @@
         itemKey="taskId"
       >
         <template #item="{ element }">
-          <div class="list-group-item">
+          <div class="list-group-item"
+               @click="openTaskDetails(groupId, element.taskId)"
+          >
             <h5>{{ element.title }}</h5>
             <p>{{ element.description }}</p>
             <p>{{ element.percentDone }}%</p>
@@ -78,6 +86,14 @@
       </Draggable>
     </div>
   </div>
+
+  <TaskDetails
+    :task="selectedTask"
+    :visible="isTaskDetailsVisible"
+    @close="closeTaskDetails"
+    @update-task="updateTask"
+    @delete-task="deleteTask"
+  />
 </template>
 
 <script setup lang="ts">
@@ -86,39 +102,60 @@ import { useRoute } from "vue-router";
 import HeaderOnly from "@/layouts/HeaderOnly/headerOnly.vue";
 import { useTaskManager } from "@/composables/uesTaskManager.js";
 import Draggable from "vuedraggable";
-import { useTaskStore } from '@/stores/taskManager.js'
-import { TaskState } from '@/types/task.js'
+import { type Task, TaskState } from '@/types/task.js'
 import { watch } from 'vue';
+import { deleteTask, updateTask } from '@/api/task.js'
+import TaskDetails from '@/components/TaskDetails/TaskDetails.vue'
 
 const route = useRoute();
-const taskStore = useTaskStore();
 
-// Define groupId as a computed property
 const groupId = computed(() => {
   const id = Number(route.params.groupId);
   return isNaN(id) ? null : id;
 });
 
-// Pass groupId to useTaskManager
-const { list1, list2, list3, list4, log } = useTaskManager(groupId);
+const {
+  list1,
+  list2,
+  list3,
+  list4,
+  log,
+  openTaskDetails,
+  closeTaskDetails,
+  isTaskDetailsVisible,
+  selectedTask,
+  loadTasks,
+} = useTaskManager(groupId);
 
-// Watch for groupId changes to load tasks
-watch(groupId, (newGroupId) => {
-  if (newGroupId !== null) {
-    taskStore.loadTasks(newGroupId);
-  } else {
-    console.error("Group ID không hợp lệ");
-  }
-});
-
-// Load tasks on mount
+// Load tasks khi groupId thay đổi hoặc component mounted
 onMounted(() => {
   if (groupId.value !== null) {
-    taskStore.loadTasks(groupId.value);
+    loadTasks();
   } else {
     console.error("Group ID không hợp lệ");
   }
 });
+
+// Xử lý thay đổi groupId
+watch(groupId, (newGroupId) => {
+  if (newGroupId !== null) {
+    loadTasks();
+  } else {
+    console.error("Group ID không hợp lệ");
+  }
+});
+
+// Hàm xử lý update-task từ TaskDetails
+const updateTaskHandler = async (updatedTask: Task) => {
+  await updateTask(updatedTask);
+};
+
+// Hàm xử lý delete-task từ TaskDetails
+const deleteTaskHandler = async () => {
+  if (selectedTask.value) {
+    await deleteTask(selectedTask.value.taskId);
+  }
+};
 </script>
 
 <style scoped lang="scss">

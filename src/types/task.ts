@@ -6,6 +6,8 @@ export interface Task {
   userId: string;
   groupId: number;
   state: TaskState;
+  fileUrl?: string
+  fileType?: string
 }
 
 export enum TaskState {

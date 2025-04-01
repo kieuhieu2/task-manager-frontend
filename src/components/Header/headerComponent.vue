@@ -17,6 +17,7 @@
   <!--        <li @click="navigateToCreateUser">Thông tin cá nhân</li>-->
           <li @click="console.log('Thêm người dùng')">Thêm người dùng</li>
           <li @click="console.log('Đổi mật khẩu')">Đổi mật khẩu</li>
+          <li @click="logout">Đăng xuất</li>
         </ul>
       </div>
     </header>
@@ -27,7 +28,8 @@
 
 import { useHeaderComponent } from "@/components/Header/useHeaderComponent.ts";
 const {
-  dropdownOpen, groups, selectedGroup, toggleDropdown, selectGroup, menuOpen, toggleMenu
+  dropdownOpen, groups, selectedGroup, toggleDropdown, selectGroup, menuOpen, toggleMenu,
+  logout
 } = useHeaderComponent();
 
 </script>

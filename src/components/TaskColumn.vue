@@ -12,14 +12,12 @@
 <script setup lang="ts">
 import draggable from "vuedraggable";
 import TaskItem from "./TaskItem.vue";
-import { useTaskStore } from "@/stores/taskStore";
-import type { Task } from "@/types/task";
+import { useTaskStore } from "@/stores/taskManager.js";
 import { computed } from 'vue'
 
 defineProps<{ title: string; status: string }>();
 const taskStore = useTaskStore();
 
-// Lọc danh sách task theo trạng thái
 const tasks = computed(() => taskStore.tasks.filter((t) => t.state === status));
 
 const handleDrag = async (event: any) => {

@@ -1,4 +1,3 @@
-// @/components/Header/useHeaderComponent.ts
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useGetMyGroupsStore } from '@/stores/getMyGroups.js';
@@ -46,14 +45,17 @@ export const useHeaderComponent = () => {
     menuOpen.value = !menuOpen.value;
   };
 
-  // Chọn nhóm và điều hướng
   const selectGroup = (group: Group) => {
-    selectedGroupId.value = group.groupId; // Cập nhật nhóm được chọn
-    dropdownOpen.value = false; // Đóng danh sách nhóm sau khi chọn
-    router.push(`/task-manager/${group.groupId}`); // Điều hướng đến route tương ứng
+    selectedGroupId.value = group.groupId;
+    dropdownOpen.value = false;
+    router.push(`/task-manager/${group.groupId}`);
   };
 
-  // Gọi fetchGroups khi composable được khởi tạo
+  const logout = () => {
+    localStorage.removeItem('authToken');
+    router.push(`/login`);
+  };
+
   fetchGroups();
 
   return {
@@ -64,5 +66,6 @@ export const useHeaderComponent = () => {
     toggleDropdown,
     toggleMenu,
     selectGroup,
+    logout
   };
 };

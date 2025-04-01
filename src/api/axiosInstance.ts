@@ -10,19 +10,13 @@ const axiosInstance = axios.create({
   },
 });
 
-// Thêm token vào header trước khi gửi request
-axiosInstance.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
+axiosInstance.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
-);
+  return config;
+}, (error) => Promise.reject(error));
 
 export const post = async <T>(path: string, data: unknown, options: AxiosRequestConfig = {}): Promise<T> => {
   const response: AxiosResponse<T> = await axiosInstance.post(path, data, options);

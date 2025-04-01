@@ -1,5 +1,5 @@
-import { computed } from "vue";
-import { TaskState } from "@/types/task.js";
+import { computed, ref } from 'vue'
+import { type Task, TaskState } from '@/types/task.js'
 import { useTaskStore } from "@/stores/taskManager.js";
 import { updateTaskState } from '@/api/task.js'
 import type { ComputedRef } from 'vue';
@@ -7,13 +7,22 @@ import type { ComputedRef } from 'vue';
 interface DragEvent {
   from?: { getAttribute: (name: string) => string | null };
   to?: { getAttribute: (name: string) => string | null };
-  added?: { element: { taskId: number } };
+  added?: { element: Task };
   moved?: { element: { taskId: number } };
   removed?: { element: { taskId: number } };
 }
 
 export function useTaskManager(groupId: ComputedRef<number | null>) {
   const store = useTaskStore();
+
+  const isTaskDetailsVisible = ref(false)
+  const selectedTask = ref<Task | null>(null)
+
+  const loadTasks = async () => {
+    if (groupId.value !== null) {
+      await store.loadTasks(groupId.value);
+    }
+  };
 
   const tasks = computed(() => {
     if (groupId.value === null) return [];
@@ -25,11 +34,31 @@ export function useTaskManager(groupId: ComputedRef<number | null>) {
   const list3 = computed(() => tasks.value.filter((task) => task.state === TaskState.DONE));
   const list4 = computed(() => tasks.value.filter((task) => task.state === TaskState.SPAM));
 
+  const openTaskDetails = (groupId: number, taskId: number) => {
+    console.log('Opening task with taskId:', taskId, 'groupId:', groupId);
+
+    const tasks = store.getTasksForGroup(groupId);
+    const task = tasks.find(t => t.taskId === taskId);
+
+    if (task) {
+      console.log('Task found:', task);
+      selectedTask.value = { ...task };
+      isTaskDetailsVisible.value = true;
+    } else {
+      console.error('Task not found:', taskId, 'in group:', groupId);
+    }
+  };
+
+  const closeTaskDetails = () => {
+    isTaskDetailsVisible.value = false;
+    selectedTask.value = null;
+  };
+
   const log = async (event: DragEvent, state: TaskState) => {
     console.log("Full event:", JSON.stringify(event, null, 2));
 
     let task = null;
-    const newState = state; // Sử dụng state được truyền vào trực tiếp
+    const newState = state;
 
     const fromId = event.from?.getAttribute('id') || null;
     const toId = event.to?.getAttribute('id') || null;
@@ -41,7 +70,6 @@ export function useTaskManager(groupId: ComputedRef<number | null>) {
       console.log("Added to state:", newState);
     } else if (event.moved) {
       task = event.moved.element;
-      // Không cần cập nhật state vì di chuyển trong cùng cột không thay đổi trạng thái
       console.log("Moved within state:", newState);
       return; // Thoát sớm vì không cần cập nhật khi di chuyển trong cùng cột
     } else if (event.removed) {
@@ -57,14 +85,32 @@ export function useTaskManager(groupId: ComputedRef<number | null>) {
       return;
     }
 
-    const taskId = task.taskId;
+    const updatedTask: Task = { ...task, state: newState };
 
     try {
-      await updateTaskState(taskId, newState);
-      await store.updateTask(groupId.value, taskId, newState);
+      await updateTaskState(task.taskId, newState);
+      await store.updateTask(groupId.value, updatedTask);
     } catch (error) {
       console.error("Lỗi khi cập nhật trạng thái:", error);
     }
+  };
+
+  const updateTaskHandler = async (updatedTask: Task) => {
+    if (groupId.value === null) {
+      console.error('Group ID is null');
+      return;
+    }
+    await store.updateTask(groupId.value, updatedTask);
+    selectedTask.value = { ...updatedTask }; // Cập nhật task hiển thị
+  };
+
+  const deleteTaskHandler = async (taskId: number) => {
+    if (groupId.value === null) {
+      console.error('Group ID is null');
+      return;
+    }
+    await store.deleteTask(groupId.value, taskId);
+    closeTaskDetails();
   };
 
   return {
@@ -73,5 +119,10 @@ export function useTaskManager(groupId: ComputedRef<number | null>) {
     list3,
     list4,
     log,
+    openTaskDetails,
+    closeTaskDetails,
+    isTaskDetailsVisible,
+    selectedTask,
+    loadTasks,
   };
 }
