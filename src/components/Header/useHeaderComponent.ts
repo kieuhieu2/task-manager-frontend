@@ -6,6 +6,7 @@ import type { Group } from '@/types/group.js';
 export const useHeaderComponent = () => {
   const router = useRouter();
   const store = useGetMyGroupsStore();
+  const showCreateGroup = ref(true);
 
   // State cho dropdown và menu
   const dropdownOpen = ref(false);
@@ -56,6 +57,14 @@ export const useHeaderComponent = () => {
     router.push(`/login`);
   };
 
+  const createGroup = () => {
+    showCreateGroup.value = true; // Mở layout GroupCreate
+  };
+
+  const closeCreateGroup = () => {
+    showCreateGroup.value = false; // Đóng layout GroupCreate
+  };
+
   fetchGroups();
 
   return {
@@ -66,6 +75,9 @@ export const useHeaderComponent = () => {
     toggleDropdown,
     toggleMenu,
     selectGroup,
-    logout
+    logout,
+    createGroup,
+    showCreateGroup,
+    closeCreateGroup,
   };
 };

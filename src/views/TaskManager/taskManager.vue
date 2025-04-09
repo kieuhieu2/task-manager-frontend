@@ -1,3 +1,4 @@
+<!-- TaskManager.vue -->
 <template>
   <HeaderOnly />
 
@@ -12,9 +13,7 @@
         itemKey="taskId"
       >
         <template #item="{ element }">
-          <div class="list-group-item"
-               @click="openTaskDetails(groupId, element.taskId)"
-          >
+          <div class="list-group-item" @click="openTaskDetails(groupId, element.taskId)">
             <h5>{{ element.title }}</h5>
             <p>{{ element.description }}</p>
             <p>{{ element.percentDone }}%</p>
@@ -33,9 +32,7 @@
         itemKey="taskId"
       >
         <template #item="{ element }">
-          <div class="list-group-item"
-               @click="openTaskDetails(groupId, element.taskId)"
-          >
+          <div class="list-group-item" @click="openTaskDetails(groupId, element.taskId)">
             <h5>{{ element.title }}</h5>
             <p>{{ element.description }}</p>
             <p>{{ element.percentDone }}%</p>
@@ -54,9 +51,7 @@
         itemKey="taskId"
       >
         <template #item="{ element }">
-          <div class="list-group-item"
-            @click="openTaskDetails(groupId, element.taskId)"
-          >
+          <div class="list-group-item" @click="openTaskDetails(groupId, element.taskId)">
             <h5>{{ element.title }}</h5>
             <p>{{ element.description }}</p>
             <p>{{ element.percentDone }}%</p>
@@ -75,9 +70,7 @@
         itemKey="taskId"
       >
         <template #item="{ element }">
-          <div class="list-group-item"
-               @click="openTaskDetails(groupId, element.taskId)"
-          >
+          <div class="list-group-item" @click="openTaskDetails(groupId, element.taskId)">
             <h5>{{ element.title }}</h5>
             <p>{{ element.description }}</p>
             <p>{{ element.percentDone }}%</p>
@@ -91,21 +84,21 @@
     :task="selectedTask"
     :visible="isTaskDetailsVisible"
     @close="closeTaskDetails"
-    @update-task="updateTask"
-    @delete-task="deleteTask"
+    @update-task="updateTaskHandler"
+    @delete-task="deleteTaskHandler"
   />
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
-import { useRoute } from "vue-router";
-import HeaderOnly from "@/layouts/HeaderOnly/headerOnly.vue";
-import { useTaskManager } from "@/composables/uesTaskManager.js";
-import Draggable from "vuedraggable";
-import { type Task, TaskState } from '@/types/task.js'
-import { watch } from 'vue';
-import { deleteTask, updateTask } from '@/api/task.js'
-import TaskDetails from '@/components/TaskDetails/TaskDetails.vue'
+import { computed, onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
+import HeaderOnly from '@/layouts/HeaderOnly/headerOnly.vue';
+import { useTaskManager } from '@/composables/uesTaskManager.js'; // Sửa typo "uesTaskManager"
+import Draggable from 'vuedraggable';
+import TaskDetails from '@/components/TaskDetails/TaskDetails.vue';
+import { TaskState } from '@/types/task';
+import type { Task } from '@/types/task';
+import { updateTask, deleteTask } from '@/api/task';
 
 const route = useRoute();
 
@@ -127,7 +120,6 @@ const {
   loadTasks,
 } = useTaskManager(groupId);
 
-// Load tasks khi groupId thay đổi hoặc component mounted
 onMounted(() => {
   if (groupId.value !== null) {
     loadTasks();
@@ -136,7 +128,6 @@ onMounted(() => {
   }
 });
 
-// Xử lý thay đổi groupId
 watch(groupId, (newGroupId) => {
   if (newGroupId !== null) {
     loadTasks();
@@ -145,15 +136,20 @@ watch(groupId, (newGroupId) => {
   }
 });
 
-// Hàm xử lý update-task từ TaskDetails
 const updateTaskHandler = async (updatedTask: Task) => {
-  await updateTask(updatedTask);
+  if (groupId.value === null) {
+    console.error('Group ID is null');
+    return;
+  }
+  await updateTask(updatedTask.taskId, updatedTask);
+  await loadTasks();
 };
 
-// Hàm xử lý delete-task từ TaskDetails
 const deleteTaskHandler = async () => {
-  if (selectedTask.value) {
+  if (selectedTask.value && groupId.value !== null) {
     await deleteTask(selectedTask.value.taskId);
+    await loadTasks();
+    closeTaskDetails();
   }
 };
 </script>

@@ -1,22 +1,22 @@
 import { computed, ref } from 'vue'
 import { type Task, TaskState } from '@/types/task.js'
 import { useTaskStore } from "@/stores/taskManager.js";
-import { updateTaskState } from '@/api/task.js'
+import { fetchTasks, updateTaskState } from '@/api/task.js'
 import type { ComputedRef } from 'vue';
 
 interface DragEvent {
   from?: { getAttribute: (name: string) => string | null };
   to?: { getAttribute: (name: string) => string | null };
   added?: { element: Task };
-  moved?: { element: { taskId: number } };
-  removed?: { element: { taskId: number } };
+  moved?: { element: Task  };
+  removed?: { element: Task  };
 }
 
 export function useTaskManager(groupId: ComputedRef<number | null>) {
   const store = useTaskStore();
 
-  const isTaskDetailsVisible = ref(false)
-  const selectedTask = ref<Task | null>(null)
+  const isTaskDetailsVisible = ref(false);
+  const selectedTask = ref<Task | null>(null);
 
   const loadTasks = async () => {
     if (groupId.value !== null) {
@@ -36,10 +36,8 @@ export function useTaskManager(groupId: ComputedRef<number | null>) {
 
   const openTaskDetails = (groupId: number, taskId: number) => {
     console.log('Opening task with taskId:', taskId, 'groupId:', groupId);
-
     const tasks = store.getTasksForGroup(groupId);
     const task = tasks.find(t => t.taskId === taskId);
-
     if (task) {
       console.log('Task found:', task);
       selectedTask.value = { ...task };
@@ -57,7 +55,7 @@ export function useTaskManager(groupId: ComputedRef<number | null>) {
   const log = async (event: DragEvent, state: TaskState) => {
     console.log("Full event:", JSON.stringify(event, null, 2));
 
-    let task = null;
+    let task: Task | null = null;
     const newState = state;
 
     const fromId = event.from?.getAttribute('id') || null;
@@ -71,14 +69,12 @@ export function useTaskManager(groupId: ComputedRef<number | null>) {
     } else if (event.moved) {
       task = event.moved.element;
       console.log("Moved within state:", newState);
-      return; // Thoát sớm vì không cần cập nhật khi di chuyển trong cùng cột
+      return; // Thoát sớm nếu chỉ di chuyển trong cùng cột
     } else if (event.removed) {
       task = event.removed.element;
       console.warn("Task đã bị xóa khỏi danh sách:", task, "From:", fromId);
-      return; // Thoát sớm vì không cần cập nhật trạng thái khi chỉ xóa
+      return; // Thoát sớm nếu chỉ xóa
     }
-
-    console.log("Task:", task, "New State:", newState);
 
     if (!task || !newState || groupId.value === null) {
       console.error("Không tìm thấy task, trạng thái mới hoặc groupId:", task, newState, groupId.value);
@@ -89,28 +85,11 @@ export function useTaskManager(groupId: ComputedRef<number | null>) {
 
     try {
       await updateTaskState(task.taskId, newState);
-      await store.updateTask(groupId.value, updatedTask);
+      await store.updateStateOfTask(groupId.value, updatedTask);
+      // Không cần reload tasks vì store đã reactive
     } catch (error) {
       console.error("Lỗi khi cập nhật trạng thái:", error);
     }
-  };
-
-  const updateTaskHandler = async (updatedTask: Task) => {
-    if (groupId.value === null) {
-      console.error('Group ID is null');
-      return;
-    }
-    await store.updateTask(groupId.value, updatedTask);
-    selectedTask.value = { ...updatedTask }; // Cập nhật task hiển thị
-  };
-
-  const deleteTaskHandler = async (taskId: number) => {
-    if (groupId.value === null) {
-      console.error('Group ID is null');
-      return;
-    }
-    await store.deleteTask(groupId.value, taskId);
-    closeTaskDetails();
   };
 
   return {

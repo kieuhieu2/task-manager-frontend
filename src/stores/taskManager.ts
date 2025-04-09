@@ -31,6 +31,7 @@ export const useTaskStore = defineStore('taskStore', () => {
       const taskIndex = tasks.findIndex(t => t.taskId === updatedTask.taskId);
       if (taskIndex !== -1) {
         tasks[taskIndex] = { ...updatedTask };
+        tasksByGroup.value[groupId] = [...tasks]
         try {
           // Chỉ truyền taskId và state vào updateTaskState
           await updateTaskState(updatedTask.taskId, updatedTask.state);
@@ -45,14 +46,15 @@ export const useTaskStore = defineStore('taskStore', () => {
     }
   };
 
-  const updateTaskInStore = async (groupId: number, updatedTask: Task) => {
+  const updateTask = async (groupId: number, updatedTask: Task) => {
     const tasks = tasksByGroup.value[groupId];
     if (tasks) {
       const taskIndex = tasks.findIndex(t => t.taskId === updatedTask.taskId);
       if (taskIndex !== -1) {
         try {
-          const returnedTask = await updateTask(updatedTask.taskId, updatedTask); // Gọi API updateTask
-          tasks[taskIndex] = { ...returnedTask }; // Cập nhật từ dữ liệu trả về
+          const returnedTask: void = await updateTask(updatedTask.taskId, updatedTask);
+          tasks[taskIndex] = { ...returnedTask };
+          tasksByGroup.value[groupId] = [...tasks];
         } catch (error) {
           console.error('Error updating task:', error);
         }
@@ -64,22 +66,19 @@ export const useTaskStore = defineStore('taskStore', () => {
     }
   };
 
-  const deleteTaskFromStore = async (groupId: number, taskId: number) => {
+  const deleteTask = async (groupId: number, taskId: number) => {
     const tasks = tasksByGroup.value[groupId];
     if (tasks) {
       const taskIndex = tasks.findIndex(t => t.taskId === taskId);
       if (taskIndex !== -1) {
         try {
-          await deleteTask(taskId); // Gọi API deleteTask
-          tasks.splice(taskIndex, 1); // Xóa task khỏi danh sách
+          await deleteTask(groupId, taskId);
+          tasks.splice(taskIndex, 1);
+          tasksByGroup.value[groupId] = [...tasks];
         } catch (error) {
           console.error('Error deleting task:', error);
         }
-      } else {
-        console.error('Task not found:', taskId, 'in group:', groupId);
       }
-    } else {
-      console.error('Group not found:', groupId);
     }
   };
 
@@ -87,7 +86,7 @@ export const useTaskStore = defineStore('taskStore', () => {
     loadTasks,
     getTasksForGroup,
     updateStateOfTask,
-    updateTask: updateTaskInStore,
-    deleteTask: deleteTaskFromStore,
+    updateTask,
+    deleteTask,
   };
 });

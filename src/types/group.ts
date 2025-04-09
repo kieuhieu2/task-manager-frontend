@@ -9,3 +9,12 @@ export interface ApiGroupResponse {
   message: string
   result: Group[]
 }
+
+export interface GroupCreate {
+  nameOfGroup: string;
+  faculty: string;
+  department: string;
+  memberCodes: string[];
+  leaderCodes: string[];
+  descriptionOfGroup: string;
+}
