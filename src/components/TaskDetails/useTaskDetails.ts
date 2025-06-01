@@ -1,16 +1,18 @@
 import { ref, watch } from 'vue';
-import { useTaskStore } from '@/stores/taskManager.js';
+import { useTaskStore } from '@/stores/taskManager.ts';
 import type { Task } from '@/types/task.js';
+import { onMounted } from 'vue';
+import { useCommentsStore } from '@/stores/commentStore.js'
+import { storeToRefs } from 'pinia'
 
 export function useTask(groupId: number) {
   const store = useTaskStore();
-
-  // State
   const selectedTask = ref<Task | null>(null);
   const isTaskDetailsVisible = ref(false);
   const isEditing = ref(false);
   const editedTask = ref<Task | null>(null);
 
+  // Task
   const loadTasks = async () => {
     await store.loadTasks(groupId);
   };
@@ -35,8 +37,8 @@ export function useTask(groupId: number) {
 
   const toggleEdit = async () => {
     if (isEditing.value && editedTask.value) {
-      await store.updateTask(groupId, editedTask.value); // Cập nhật toàn bộ task
-      selectedTask.value = { ...editedTask.value }; // Đồng bộ giao diện
+      await store.updateTask(groupId, editedTask.value);
+      selectedTask.value = { ...editedTask.value };
     }
     isEditing.value = !isEditing.value;
   };
@@ -53,6 +55,11 @@ export function useTask(groupId: number) {
       editedTask.value = { ...newTask };
     }
   });
+  // End task
+
+  // Comment
+
+  // end comment
 
   return {
     selectedTask,
@@ -65,5 +72,17 @@ export function useTask(groupId: number) {
     closeTaskDetails,
     toggleEdit,
     deleteTask,
+  };
+}
+
+export function useTaskDetails(taskId: number) {
+  const taskManagerStore = useTaskStore();
+
+  onMounted(() => {
+    taskManagerStore.fetchFileForTask(taskId);
+  });
+
+  return {
+    selectedTaskFile: taskManagerStore.selectedTaskFile,
   };
 }

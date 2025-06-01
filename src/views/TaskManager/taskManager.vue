@@ -87,13 +87,14 @@
     @update-task="updateTaskHandler"
     @delete-task="deleteTaskHandler"
   />
+
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import HeaderOnly from '@/layouts/HeaderOnly/headerOnly.vue';
-import { useTaskManager } from '@/composables/uesTaskManager.js'; // Sửa typo "uesTaskManager"
+import { useTaskManager } from '@/composables/uesTaskManager.js';
 import Draggable from 'vuedraggable';
 import TaskDetails from '@/components/TaskDetails/TaskDetails.vue';
 import { TaskState } from '@/types/task';
@@ -120,38 +121,38 @@ const {
   loadTasks,
 } = useTaskManager(groupId);
 
-onMounted(() => {
-  if (groupId.value !== null) {
-    loadTasks();
-  } else {
-    console.error("Group ID không hợp lệ");
-  }
-});
+  onMounted(() => {
+    if (groupId.value !== null) {
+      loadTasks();
+    } else {
+      console.error("Group ID không hợp lệ");
+    }
+  });
 
-watch(groupId, (newGroupId) => {
-  if (newGroupId !== null) {
-    loadTasks();
-  } else {
-    console.error("Group ID không hợp lệ");
-  }
-});
+  watch(groupId, (newGroupId) => {
+    if (newGroupId !== null) {
+      loadTasks();
+    } else {
+      console.error("Group ID không hợp lệ");
+    }
+  });
 
-const updateTaskHandler = async (updatedTask: Task) => {
-  if (groupId.value === null) {
-    console.error('Group ID is null');
-    return;
-  }
-  await updateTask(updatedTask.taskId, updatedTask);
-  await loadTasks();
-};
-
-const deleteTaskHandler = async () => {
-  if (selectedTask.value && groupId.value !== null) {
-    await deleteTask(selectedTask.value.taskId);
+  const updateTaskHandler = async (updatedTask: Task) => {
+    if (groupId.value === null) {
+      console.error('Group ID is null');
+      return;
+    }
+    await updateTask(updatedTask.taskId, updatedTask);
     await loadTasks();
-    closeTaskDetails();
-  }
-};
+  };
+
+  const deleteTaskHandler = async () => {
+    if (selectedTask.value && groupId.value !== null) {
+      await deleteTask(selectedTask.value.taskId);
+      await loadTasks();
+      closeTaskDetails();
+    }
+  };
 </script>
 
 <style scoped lang="scss">

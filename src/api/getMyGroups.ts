@@ -9,7 +9,7 @@ export async function fetchGetMyGroups(): Promise<Group[]> {
 
   try {
     const res: ApiGroupResponse = await get(
-      '/groups',
+      `/groups/my-groups/${localStorage.getItem('userCode')}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,

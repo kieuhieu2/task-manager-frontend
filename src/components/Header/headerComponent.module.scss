@@ -2,6 +2,7 @@ $header-height: 60px;
 $horizontal-spacer: 24px;
 $gray-200: #e5e7eb;
 $gray-800: #1f2937;
+$notification-badge: #f87171;
 
 .header-wrapper {
   height: $header-height; /* Giữ chỗ cho header */
@@ -117,6 +118,90 @@ $gray-800: #1f2937;
         &:hover {
           background: #f3f4f6;
         }
+      }
+    }
+  }
+
+  // Notification bell and dropdown
+  .notification-container {
+    position: relative;
+    margin-right: -650px;
+    padding-top: 4px;
+
+    .bell-icon {
+      background: none;
+      border: none;
+      position: relative;
+      font-size: 28px;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+
+      .badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        background: $notification-badge;
+        color: white;
+        border-radius: 50%;
+        min-width: 18px;
+        height: 18px;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 5px;
+        font-weight: bold;
+        box-shadow: 0 0 0 2px $gray-200;
+      }
+    }
+
+    .notification-dropdown {
+      position: absolute;
+      right: 0;
+      top: 110%;
+      width: 320px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+      z-index: 12;
+      padding: 12px 0;
+
+      .dropdown-header {
+        font-weight: bold;
+        padding: 0 16px 8px 16px;
+        color: $gray-800;
+        border-bottom: 1px solid $gray-200;
+      }
+
+      ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+
+        li {
+          padding: 10px 16px;
+          cursor: pointer;
+          transition: background 0.2s;
+          white-space: normal;
+          word-break: break-word;
+          color: $gray-800;
+
+          &:hover {
+            background: #f3f4f6;
+          }
+
+          &.unread {
+            font-weight: bold;
+          }
+        }
+      }
+
+      .empty {
+        color: #888;
+        padding: 20px 16px;
+        text-align: center;
       }
     }
   }

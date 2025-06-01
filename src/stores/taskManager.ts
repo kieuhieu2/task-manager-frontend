@@ -1,10 +1,11 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
-import { fetchTasks, updateTaskState, updateTask, deleteTask } from '@/api/task.js'
+import { ref, type Ref } from "vue";
+import { fetchTasks, updateTaskState, updateTask, deleteTask, getFileOfTask } from '@/api/task.js'
 import { type Task, TaskState } from '@/types/task.js'
 
 export const useTaskStore = defineStore('taskStore', () => {
   const tasksByGroup = ref<{ [groupId: number]: Task[] }>({});
+  const selectedTaskFile: Ref<{ fileUrl: string; fileType: string } | null> = ref(null);
 
   const loadTasks = async (groupId: number) => {
     if (!tasksByGroup.value[groupId]) {
@@ -13,7 +14,7 @@ export const useTaskStore = defineStore('taskStore', () => {
         tasksByGroup.value[groupId] = tasks.map(task => ({
           ...task,
           fileUrl: task.fileUrl || undefined,
-          fileType: typeof task.fileType === 'string' ? task.fileType : undefined
+          fileType: task.fileType ?? null,
         })) as Task[];
       } catch (error) {
         console.error('Error loading tasks:', error);
@@ -46,15 +47,24 @@ export const useTaskStore = defineStore('taskStore', () => {
     }
   };
 
+  // Fix the type issue for returnedTask by ensuring it is treated as an object
   const updateTask = async (groupId: number, updatedTask: Task) => {
     const tasks = tasksByGroup.value[groupId];
     if (tasks) {
       const taskIndex = tasks.findIndex(t => t.taskId === updatedTask.taskId);
       if (taskIndex !== -1) {
         try {
-          const returnedTask: void = await updateTask(updatedTask.taskId, updatedTask);
-          tasks[taskIndex] = { ...returnedTask };
-          tasksByGroup.value[groupId] = [...tasks];
+          const returnedTask = await updateTask(updatedTask.taskId, updatedTask);
+          // Ensure returnedTask is a valid object and matches the Task type
+          if (returnedTask !== undefined && returnedTask !== null && typeof returnedTask === 'object' && !Array.isArray(returnedTask)) {
+            const validatedTask = returnedTask as Partial<Task>;
+            tasks[taskIndex] = {
+              ...tasks[taskIndex], // Preserve existing task properties
+              ...validatedTask,   // Merge with returnedTask properties
+            } as Task;
+          } else {
+            console.error('Invalid returnedTask:', returnedTask);
+          }
         } catch (error) {
           console.error('Error updating task:', error);
         }
@@ -82,11 +92,52 @@ export const useTaskStore = defineStore('taskStore', () => {
     }
   };
 
+  // Fix the type issue for selectedTaskFile
+  const fetchFileForTask = async (taskId: number) => {
+    try {
+      const fileData = await getFileOfTask(taskId) as { fileUrl: string; fileType?: string } | void;
+      if (!fileData) {
+        throw new Error('Failed to fetch file data for task');
+      }
+      if (fileData) {
+        selectedTaskFile.value = {
+          fileUrl: fileData.fileUrl,
+          fileType: fileData.fileType || 'unknown', // Ensure fileType is set, defaulting to 'unknown' if missing
+        };
+      } else {
+        selectedTaskFile.value = null;
+      }
+    } catch (error) {
+      console.error('Error fetching file for task:', error);
+    }
+  };
+
+  const openTask = async (groupId: number, taskId: number) => {
+    const tasks = tasksByGroup.value[groupId];
+    if (tasks) {
+      const task = tasks.find(t => t.taskId === taskId);
+      if (task) {
+        try {
+          await fetchFileForTask(taskId); // Fetch the file for the task when it is opened
+        } catch (error) {
+          console.error('Error opening task:', error);
+        }
+      } else {
+        console.error('Task not found:', taskId, 'in group:', groupId);
+      }
+    } else {
+      console.error('Group not found:', groupId);
+    }
+  };
+
   return { tasksByGroup,
+    selectedTaskFile,
     loadTasks,
     getTasksForGroup,
     updateStateOfTask,
     updateTask,
     deleteTask,
+    fetchFileForTask,
+    openTask,
   };
 });

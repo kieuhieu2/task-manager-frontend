@@ -2,8 +2,6 @@
 import { ref } from 'vue';
 import { createGroup } from '@/api/getMyGroups.js';
 
-defineEmits(['close']);
-
 interface GroupCreate {
   nameOfGroup: string;
   faculty: string;
@@ -60,107 +58,96 @@ const createGroupHandler = async () => {
 </script>
 
 <template>
-  <div class="create-container">
-    <div class="create-header">
-      <h2>Tạo nhóm mới</h2>
-      <button @click="$emit('close')" class="close-btn">[X]</button>
+  <div class="modal-overlay">
+    <div class="modal-content">
+      <div class="create-header">
+        <h2>Tạo nhóm mới</h2>
+        <button @click="$emit('close')" class="close-btn">×</button>
+      </div>
+
+      <form @submit.prevent="createGroupHandler" class="create-form">
+        <div class="form-group">
+          <label for="nameOfGroup">Tên nhóm:</label>
+          <input v-model="group.nameOfGroup" id="nameOfGroup" type="text" required />
+        </div>
+
+        <div class="form-group">
+          <label for="faculty">Khoa:</label>
+          <input v-model="group.faculty" id="faculty" type="text" required />
+        </div>
+
+        <div class="form-group">
+          <label for="department">Bộ môn:</label>
+          <input v-model="group.department" id="department" type="text" required />
+        </div>
+
+        <div class="form-group">
+          <label>Mã thành viên:</label>
+          <div class="code-input">
+            <input v-model="newMemberCode" type="text" placeholder="Nhập mã thành viên" @keyup.enter="addMemberCode" />
+            <button type="button" @click="addMemberCode" class="add-btn">Thêm</button>
+          </div>
+          <div class="code-list">
+            <div v-for="(code, index) in group.memberCodes" :key="index" class="code-item">
+              <span>{{ code }}</span>
+              <button type="button" @click="removeMemberCode(index)" class="remove-btn">X</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Mã trưởng nhóm:</label>
+          <div class="code-input">
+            <input v-model="newLeaderCode" type="text" placeholder="Nhập mã trưởng nhóm" @keyup.enter="addLeaderCode" />
+            <button type="button" @click="addLeaderCode" class="add-btn">Thêm</button>
+          </div>
+          <div class="code-list">
+            <div v-for="(code, index) in group.leaderCodes" :key="index" class="code-item">
+              <span>{{ code }}</span>
+              <button type="button" @click="removeLeaderCode(index)" class="remove-btn">X</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Mô tả:</label>
+          <textarea v-model="group.descriptionOfGroup" id="description" rows="5"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="submit-btn">Tạo nhóm</button>
+          <button type="button" @click="$emit('close')" class="cancel-btn">Hủy</button>
+        </div>
+
+        <p v-if="error" class="error-message">{{ error }}</p>
+      </form>
     </div>
-    <form @submit.prevent="createGroupHandler" class="create-form">
-      <div class="form-group">
-        <label for="nameOfGroup">Tên nhóm:</label>
-        <input
-          v-model="group.nameOfGroup"
-          id="nameOfGroup"
-          type="text"
-          required
-          placeholder="Nhập tên nhóm"
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="faculty">Khoa:</label>
-        <input
-          v-model="group.faculty"
-          id="faculty"
-          type="text"
-          required
-          placeholder="Nhập tên khoa"
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="department">Bộ môn:</label>
-        <input
-          v-model="group.department"
-          id="department"
-          type="text"
-          required
-          placeholder="Nhập tên bộ môn"
-        />
-      </div>
-
-      <div class="form-group">
-        <label>Mã thành viên:</label>
-        <div class="code-input">
-          <input
-            v-model="newMemberCode"
-            type="text"
-            placeholder="Nhập mã thành viên"
-            @keyup.enter="addMemberCode"
-          />
-          <button type="button" @click="addMemberCode" class="add-btn">Thêm</button>
-        </div>
-        <div class="code-list">
-          <div v-for="(code, index) in group.memberCodes" :key="index" class="code-item">
-            <span>{{ code }}</span>
-            <button type="button" @click="removeMemberCode(index)" class="remove-btn">X</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label>Mã trưởng nhóm:</label>
-        <div class="code-input">
-          <input
-            v-model="newLeaderCode"
-            type="text"
-            placeholder="Nhập mã trưởng nhóm"
-            @keyup.enter="addLeaderCode"
-          />
-          <button type="button" @click="addLeaderCode" class="add-btn">Thêm</button>
-        </div>
-        <div class="code-list">
-          <div v-for="(code, index) in group.leaderCodes" :key="index" class="code-item">
-            <span>{{ code }}</span>
-            <button type="button" @click="removeLeaderCode(index)" class="remove-btn">X</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="description">Mô tả:</label>
-        <textarea
-          v-model="group.descriptionOfGroup"
-          id="description"
-          placeholder="Nhập mô tả nhóm"
-          rows="5"
-        ></textarea>
-      </div>
-
-      <div class="form-actions">
-        <button type="submit" class="submit-btn">Tạo nhóm</button>
-        <button type="button" @click="$emit('close')" class="cancel-btn">Hủy</button>
-      </div>
-
-      <p v-if="error" class="error-message">{{ error }}</p>
-    </form>
   </div>
 </template>
 
-<style scoped lang="scss">
 
-.create-container {
-  padding: 20px;
+<style scoped lang="scss">
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 80vw;
+  max-height: 80vh;
+  overflow-y: auto;
   position: relative;
 }
 
@@ -171,53 +158,43 @@ const createGroupHandler = async () => {
   margin-bottom: 20px;
 }
 
-h2 {
-  margin: 0;
-  color: #333;
-}
-
 .close-btn {
   background-color: #dc3545;
   color: white;
   border: none;
+  font-size: 1.5rem;
   width: 30px;
   height: 30px;
   border-radius: 50%;
   cursor: pointer;
-  font-size: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
+
   &:hover {
     background-color: #c82333;
   }
 }
 
-/* Giữ nguyên các style khác như trước */
 .create-form {
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
 }
 
-.form-group {
-  margin-bottom: 20px;
-}
-
-label {
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
   display: block;
-  margin-bottom: 5px;
-  font-weight: 500;
-  color: #333;
 }
 
-input, textarea {
+input,
+textarea {
   width: 100%;
-  padding: 8px;
+  padding: 0.6rem;
   border: 1px solid #ddd;
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 1rem;
 }
 
 textarea {
@@ -226,42 +203,29 @@ textarea {
 
 .code-input {
   display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.add-btn {
-  background-color: #28a745;
-  color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 4px;
-  cursor: pointer;
-  &:hover {
-    background-color: #218838;
-  }
+  gap: 0.5rem;
 }
 
 .code-list {
-  margin-top: 10px;
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 }
 
 .code-item {
+  background: #e9ecef;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
   display: flex;
   align-items: center;
-  background-color: #e9ecef;
-  padding: 5px 10px;
-  border-radius: 4px;
-  gap: 5px;
+  gap: 0.5rem;
 }
 
 .remove-btn {
-  background-color: #dc3545;
-  color: white;
+  background: #dc3545;
   border: none;
+  color: white;
   width: 20px;
   height: 20px;
   border-radius: 50%;
@@ -269,24 +233,39 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: center;
+
   &:hover {
-    background-color: #c82333;
+    background: #c82333;
+  }
+}
+
+.add-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover {
+    background: #218838;
   }
 }
 
 .form-actions {
   display: flex;
-  gap: 10px;
   justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 .submit-btn {
   background-color: #007bff;
   color: white;
   border: none;
-  padding: 10px 20px;
+  padding: 0.6rem 1.2rem;
   border-radius: 4px;
   cursor: pointer;
+
   &:hover {
     background-color: #0056b3;
   }
@@ -296,9 +275,10 @@ textarea {
   background-color: #6c757d;
   color: white;
   border: none;
-  padding: 10px 20px;
+  padding: 0.6rem 1.2rem;
   border-radius: 4px;
   cursor: pointer;
+
   &:hover {
     background-color: #5a6268;
   }
@@ -307,6 +287,5 @@ textarea {
 .error-message {
   color: #dc3545;
   text-align: center;
-  margin-top: 10px;
 }
 </style>

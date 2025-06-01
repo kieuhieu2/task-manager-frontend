@@ -15,7 +15,6 @@ import TaskItem from "./TaskItem.vue";
 import { useTaskStore } from "@/stores/taskManager.js";
 import { computed } from 'vue'
 
-defineProps<{ title: string; status: string }>();
 const taskStore = useTaskStore();
 
 const tasks = computed(() => taskStore.tasks.filter((t) => t.state === status));

@@ -10,7 +10,6 @@
 
 <script setup lang="ts">
 import type { Task } from "@/types/task";
-defineProps<{ task: Task }>();
 </script>
 
 <style scoped lang="scss">

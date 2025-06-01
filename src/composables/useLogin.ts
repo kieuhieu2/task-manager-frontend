@@ -41,7 +41,6 @@ export function useLogin() {
 
       console.log("Đăng nhập thành công:", response.data);
       localStorage.setItem("token", response.data.result.token);
-
       const payload = jwtDecode<TokenPayload>(response.data.result.token);
       localStorage.setItem("role", payload.scope);
       localStorage.setItem("userCode", payload.sub);

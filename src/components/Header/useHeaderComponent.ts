@@ -1,12 +1,39 @@
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router';
 import { useGetMyGroupsStore } from '@/stores/getMyGroups.js';
 import type { Group } from '@/types/group.js';
+import { useNotificationStore } from '@/stores/notificationStore.js'
+import { storeToRefs } from 'pinia'
 
 export const useHeaderComponent = () => {
   const router = useRouter();
   const store = useGetMyGroupsStore();
-  const showCreateGroup = ref(true);
+  const showCreateGroup = ref(false);
+
+  // Begin notification
+  const notificationStore = useNotificationStore()
+  const {
+    notifications,
+    loading: notificationsLoading,
+    error: notificationsError,
+  } = storeToRefs(notificationStore)
+
+  function getNotifications() {
+    const userCode = localStorage.getItem('userCode') || ""
+    notificationStore.fetchNotifications(userCode);
+  }
+
+  onMounted(() => {
+    getNotifications()
+  });
+
+  const notificationDropdownOpen = ref(false);
+  function toggleNotificationDropdown() {
+    notificationDropdownOpen.value = !notificationDropdownOpen.value;
+    //  call api to set notification as read
+  }
+
+  // end notifications
 
   // State cho dropdown và menu
   const dropdownOpen = ref(false);
@@ -49,6 +76,7 @@ export const useHeaderComponent = () => {
   const selectGroup = (group: Group) => {
     selectedGroupId.value = group.groupId;
     dropdownOpen.value = false;
+    localStorage.setItem('groupId', String(group.groupId));
     router.push(`/task-manager/${group.groupId}`);
   };
 
@@ -58,14 +86,22 @@ export const useHeaderComponent = () => {
   };
 
   const createGroup = () => {
-    showCreateGroup.value = true; // Mở layout GroupCreate
+    showCreateGroup.value = true;
   };
 
   const closeCreateGroup = () => {
-    showCreateGroup.value = false; // Đóng layout GroupCreate
+    showCreateGroup.value = false;
   };
 
   fetchGroups();
+
+  const showCreateTask = ref(false);
+  const openCreateTask = () => {
+    showCreateTask.value = true;
+  };
+  const closeCreateTask = () => {
+    showCreateTask.value = false;
+  };
 
   return {
     dropdownOpen,
@@ -79,5 +115,17 @@ export const useHeaderComponent = () => {
     createGroup,
     showCreateGroup,
     closeCreateGroup,
+
+    // Notifications
+    notifications,
+    notificationsLoading,
+    notificationsError,
+    notificationDropdownOpen,
+    toggleNotificationDropdown,
+
+    //task
+    openCreateTask,
+    showCreateTask,
+    closeCreateTask,
   };
 };
