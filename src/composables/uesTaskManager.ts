@@ -45,6 +45,7 @@ export function useTaskManager(groupId: ComputedRef<number | null>) {
     } else {
       console.error('Task not found:', taskId, 'in group:', groupId);
     }
+    localStorage.setItem("taskId: ", taskId.toString())
   };
 
   const closeTaskDetails = () => {

@@ -42,16 +42,36 @@
       </div>
 
       <div class="comments-section">
-        <h3>Comments</h3>
+        <div class="comment-item" v-for="comment in comments" :key="comment.commentId">
+          <div v-if="editingCommentId === comment.commentId">
+            <input v-model="editedCommentText" />
+            <div class="edit-controls">
+              <button class="save-btn" @click="saveEditedComment(comment.commentId)">Lưu</button>
+              <button class="cancel-btn" @click="cancelEdit">Hủy</button>
+            </div>
+          </div>
+          <div v-else>
+            <div>
+              <p>{{ comment.commentText }}</p>
+              <span>{{ comment.userName }}</span>
+            </div>
+            <div class="comment-actions">
+              <button @click="handleEditClick(comment.commentId, comment.commentText)">Sửa</button>
+              <button @click="handleDeleteComment(comment.commentId)">Xóa</button>
+            </div>
+          </div>
+        </div>
+
+        <h3>Ghi chú</h3>
         <div class="comment-input">
-          <input v-model="newComment" type="text" placeholder="Enter your comment here..." />
+          <input v-model="newComment" type="text" placeholder="Bạn có ghi chú gì về công việc này ..." />
           <button @click="submitComment">Gửi</button>
         </div>
       </div>
 
       <div class="actions">
-        <button @click="$emit('delete-task')" class="delete-btn">Xóa</button>
-        <button @click="toggleEdit" class="edit-btn">{{ isEditing ? "Lưu" : "Sửa" }}</button>
+        <button @click="$emit('delete-task')" class="delete-btn">Xóa công việc</button>
+        <button @click="toggleEdit" class="edit-btn">{{ isEditing ? "Lưu" : "Sửa công việc" }}</button>
       </div>
     </div>
     <div class="task-details-modal" v-else>
@@ -65,7 +85,7 @@
 import { ref, watch } from 'vue';
 import type { Task } from '@/types/task';
 import { useTaskStore } from '@/stores/taskManager';
-import { createComment } from '@/api/commentApi.js';
+import { createComment, fetchComments, updateComment, deleteComment } from '@/api/commentApi.js';
 
 const props = defineProps<{
   task: Task | null;
@@ -81,17 +101,30 @@ const emit = defineEmits<{
 const isEditing = ref(false);
 const editedTask = ref<Task>({ ...props.task } as Task);
 const newComment = ref('');
+const comments = ref<Comment[]>([]);
+const editingCommentId = ref<number | null>(null);
+const editedCommentText = ref<string>('');
 
 watch(() => props.task, async (newTask) => {
   if (newTask) {
     editedTask.value = { ...newTask };
     try {
       await taskStore.fetchFileForTask(newTask.taskId);
+      await loadComments(newTask.taskId);
     } catch (error) {
       console.error('Error fetching file for task:', error);
     }
   }
 }, { immediate: true });
+
+const loadComments = async (taskId: number) => {
+  try {
+    const result = await fetchComments(taskId);
+    comments.value = result || [];
+  } catch (error) {
+    console.error('Không thể tải comment:', error);
+  }
+};
 
 const toggleEdit = () => {
   if (isEditing.value && editedTask.value) {
@@ -126,57 +159,56 @@ const submitComment = async () => {
     await createComment(props.task?.taskId || 0, newComment.value);
     alert('Comment submitted successfully');
     newComment.value = '';
+    await loadComments(props.task?.taskId || 0)
   } catch (error) {
     console.error('Error submitting comment:', error);
     alert('Failed to submit comment');
+  }
+};
+
+//cmt
+const handleEditClick = (commentId: number, currentText: string) => {
+  editingCommentId.value = commentId;
+  editedCommentText.value = currentText;
+};
+
+const cancelEdit = () => {
+  editingCommentId.value = null;
+  editedCommentText.value = '';
+};
+
+const saveEditedComment = async (commentId: number) => {
+  if (!editedCommentText.value.trim()) {
+    alert('Nội dung bình luận không được để trống');
+    return;
+  }
+
+  try {
+    await updateComment(commentId, editedCommentText.value);
+    await loadComments(props.task?.taskId || 0);
+    editingCommentId.value = null;
+    editedCommentText.value = '';
+    alert('Đã cập nhật bình luận');
+  } catch (error) {
+    console.error('Lỗi khi sửa bình luận:', error);
+    alert('Sửa bình luận thất bại');
+  }
+};
+
+const handleDeleteComment = async (commentId: number) => {
+  if (!confirm('Bạn có chắc muốn xóa bình luận này không?')) return;
+
+  try {
+    await deleteComment(commentId);
+    await loadComments(props.task?.taskId || 0);
+    alert('Đã xóa bình luận');
+  } catch (error) {
+    console.error('Lỗi khi xóa bình luận:', error);
+    alert('Xóa bình luận thất bại');
   }
 };
 </script>
 
 <style scoped lang="scss">
 @use './TaskDetails.module.scss';
-
-.file-download-btn {
-  margin-top: 10px;
-  padding: 8px 12px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.file-download-btn:hover {
-  background-color: #0056b3;
-}
-
-.comments-section {
-  margin-top: 20px;
-}
-
-.comment-input {
-  display: flex;
-  gap: 10px;
-}
-
-.comment-input input {
-  flex: 1;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.comment-input button {
-  padding: 8px 12px;
-  background-color: #28a745;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.comment-input button:hover {
-  background-color: #218838;
-}
 </style>

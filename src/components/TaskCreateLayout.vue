@@ -1,20 +1,18 @@
-<!-- src/components/Task/TaskCreateLayout.vue -->
 <template>
   <div class="overlay">
     <div class="form-create-task-container">
       <button class="close-btn" @click="$emit('close')">×</button>
-      <h3>Tạo mới Task</h3>
+      <h3 class="create-task-label">Tạo mới Task</h3>
       <form @submit.prevent="submitTask">
-        <div>
+        <div hidden="hidden">
           <label>Mã nhóm: </label>
           <p class="readonly-field">{{ form.groupId }}</p>
         </div>
 
-        <div>
+        <div hidden="hidden">
           <label>Mã người dùng:</label>
           <p class="readonly-field">{{ form.userId }}</p>
         </div>
-
 
         <div>
           <label>Tiêu đề:</label>
@@ -59,7 +57,7 @@
           <input type="file" @change="onFileChange" />
         </div>
 
-        <button type="submit">Tạo Task</button>
+        <button type="submit">Tạo Công việc</button>
       </form>
     </div>
   </div>
@@ -127,7 +125,7 @@ async function submitTask() {
     }
 
     await createTask(formData);
-
+    alert('Tạo công việc mới thành công');
     emit('submitted');
     emit('close');
   } catch (error: any) {
@@ -262,5 +260,11 @@ button[type="submit"]:hover {
   border-radius: 4px;
   color: #333;
   margin-top: 4px;
+}
+
+.create-task-label {
+  text-align: center;
+  font-size: 25px;
+  margin: 0 auto;
 }
 </style>

@@ -1,4 +1,4 @@
-import type { Task } from '@/types/task.js'
+import type { Task } from '@/types/Task.ts'
 import type { ApiResponse } from '@/types/api.js'
 import { get, put, post } from './axiosInstance.js'
 import axiosInstance from './axiosInstance.js';

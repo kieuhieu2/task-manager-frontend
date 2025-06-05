@@ -1,84 +1,85 @@
-<!-- TaskManager.vue -->
 <template>
   <HeaderOnly />
+  <div class="task-manager-container">
+    <div class="row">
+      <div class="col-3" id="todoColumn">
+        <h3>Cần Làm</h3>
+        <Draggable
+          class="list-group"
+          :list="list1"
+          group="tasks"
+          @change="(event) => log(event, TaskState.TODO)"
+          itemKey="taskId"
+        >
+          <template #item="{ element }">
+            <div class="list-group-item" @click="openTaskDetails(groupId, element.taskId)">
+              <h5>{{ element.title }}</h5>
+              <p>{{ element.description }}</p>
+              <p>{{ element.percentDone }}%</p>
+            </div>
+          </template>
+        </Draggable>
+      </div>
 
-  <div class="row">
-    <div class="col-3" id="todoColumn">
-      <h3>Cần Làm</h3>
-      <Draggable
-        class="list-group"
-        :list="list1"
-        group="tasks"
-        @change="(event) => log(event, TaskState.TODO)"
-        itemKey="taskId"
-      >
-        <template #item="{ element }">
-          <div class="list-group-item" @click="openTaskDetails(groupId, element.taskId)">
-            <h5>{{ element.title }}</h5>
-            <p>{{ element.description }}</p>
-            <p>{{ element.percentDone }}%</p>
-          </div>
-        </template>
-      </Draggable>
-    </div>
+      <div class="col-3" id="inProgressColumn">
+        <h3>Đang Làm</h3>
+        <Draggable
+          class="list-group"
+          :list="list2"
+          group="tasks"
+          @change="(event) => log(event, TaskState.IN_PROGRESS)"
+          itemKey="taskId"
+        >
+          <template #item="{ element }">
+            <div class="list-group-item" @click="openTaskDetails(groupId, element.taskId)">
+              <h5>{{ element.title }}</h5>
+              <p>{{ element.description }}</p>
+              <p>{{ element.percentDone }}%</p>
+            </div>
+          </template>
+        </Draggable>
+      </div>
 
-    <div class="col-3" id="inProgressColumn">
-      <h3>Đang Làm</h3>
-      <Draggable
-        class="list-group"
-        :list="list2"
-        group="tasks"
-        @change="(event) => log(event, TaskState.IN_PROGRESS)"
-        itemKey="taskId"
-      >
-        <template #item="{ element }">
-          <div class="list-group-item" @click="openTaskDetails(groupId, element.taskId)">
-            <h5>{{ element.title }}</h5>
-            <p>{{ element.description }}</p>
-            <p>{{ element.percentDone }}%</p>
-          </div>
-        </template>
-      </Draggable>
-    </div>
+      <div class="col-3" id="doneColumn">
+        <h3>Đã Xong</h3>
+        <Draggable
+          class="list-group"
+          :list="list3"
+          group="tasks"
+          @change="(event) => log(event, TaskState.DONE)"
+          itemKey="taskId"
+        >
+          <template #item="{ element }">
+            <div class="list-group-item" @click="openTaskDetails(groupId, element.taskId)">
+              <h5>{{ element.title }}</h5>
+              <p>{{ element.description }}</p>
+              <p>{{ element.percentDone }}%</p>
+            </div>
+          </template>
+        </Draggable>
+      </div>
 
-    <div class="col-3" id="doneColumn">
-      <h3>Đã Xong</h3>
-      <Draggable
-        class="list-group"
-        :list="list3"
-        group="tasks"
-        @change="(event) => log(event, TaskState.DONE)"
-        itemKey="taskId"
-      >
-        <template #item="{ element }">
-          <div class="list-group-item" @click="openTaskDetails(groupId, element.taskId)">
-            <h5>{{ element.title }}</h5>
-            <p>{{ element.description }}</p>
-            <p>{{ element.percentDone }}%</p>
-          </div>
-        </template>
-      </Draggable>
-    </div>
-
-    <div class="col-3" id="spamColumn">
-      <h3>Rác</h3>
-      <Draggable
-        class="list-group"
-        :list="list4"
-        group="tasks"
-        @change="(event) => log(event, TaskState.SPAM)"
-        itemKey="taskId"
-      >
-        <template #item="{ element }">
-          <div class="list-group-item" @click="openTaskDetails(groupId, element.taskId)">
-            <h5>{{ element.title }}</h5>
-            <p>{{ element.description }}</p>
-            <p>{{ element.percentDone }}%</p>
-          </div>
-        </template>
-      </Draggable>
+<!--      <div class="col-3" id="spamColumn">-->
+<!--        <h3>Rác</h3>-->
+<!--        <Draggable-->
+<!--          class="list-group"-->
+<!--          :list="list4"-->
+<!--          group="tasks"-->
+<!--          @change="(event) => log(event, TaskState.SPAM)"-->
+<!--          itemKey="taskId"-->
+<!--        >-->
+<!--          <template #item="{ element }">-->
+<!--            <div class="list-group-item" @click="openTaskDetails(groupId, element.taskId)">-->
+<!--              <h5>{{ element.title }}</h5>-->
+<!--              <p>{{ element.description }}</p>-->
+<!--              <p>{{ element.percentDone }}%</p>-->
+<!--            </div>-->
+<!--          </template>-->
+<!--        </Draggable>-->
+<!--      </div>-->
     </div>
   </div>
+
 
   <TaskDetails
     :task="selectedTask"
@@ -99,7 +100,7 @@ import Draggable from 'vuedraggable';
 import TaskDetails from '@/components/TaskDetails/TaskDetails.vue';
 import { TaskState } from '@/types/task';
 import type { Task } from '@/types/task';
-import { updateTask, deleteTask } from '@/api/task';
+import { updateTask, deleteTask } from '@/api/task.js';
 
 const route = useRoute();
 
