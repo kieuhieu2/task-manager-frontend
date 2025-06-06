@@ -1,4 +1,4 @@
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, defineEmits } from 'vue'
 import { useRouter } from 'vue-router';
 import { useGetMyGroupsStore } from '@/stores/getMyGroups.js';
 import type { Group } from '@/types/group.js';
@@ -103,6 +103,19 @@ export const useHeaderComponent = () => {
     showCreateTask.value = false;
   };
 
+  // handle my info
+  const showMyInfo = ref(false)
+
+  const handleMyInfo = () => {
+    showMyInfo.value = true
+    console.log('Đã mở modal')
+
+  }
+
+  const closeMyInfo = () => {
+    showMyInfo.value = false
+  }
+
   return {
     dropdownOpen,
     menuOpen,
@@ -127,5 +140,10 @@ export const useHeaderComponent = () => {
     openCreateTask,
     showCreateTask,
     closeCreateTask,
+
+    //my info
+    showMyInfo,
+    handleMyInfo,
+    closeMyInfo,
   };
 };

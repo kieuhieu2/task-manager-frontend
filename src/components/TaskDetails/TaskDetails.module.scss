@@ -18,7 +18,9 @@
   padding: 20px;
   border-radius: 8px;
   width: 80vw;
-  height: 80vh;
+  min-height: 80vh;
+  height: auto;
+  max-height: none;
   max-width: 100%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
@@ -98,13 +100,13 @@ button {
 .edit-btn {
   background: #007bff;
   color: white;
-  width: 120px;
+  width: auto;
 }
 
 .delete-btn {
   background: red;
   color: white;
-  width: 120px;
+  width: auto;
 }
 
 button:hover {

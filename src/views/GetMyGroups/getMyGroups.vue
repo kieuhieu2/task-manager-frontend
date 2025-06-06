@@ -19,7 +19,7 @@
           {{ group.nameOfGroup }}
         </button>
         <p class="group-description">{{ group.descriptionOfGroup }}</p>
-        <div class="action-buttons">
+        <div class="action-buttons" v-if="group.isLeader">
           <button @click="startEditing(group)" class="edit-button">Sửa</button>
           <button @click="deleteGroupHandler(group.groupId)" class="delete-button">Xóa</button>
         </div>
@@ -34,6 +34,7 @@ import { useGetMyGroups } from '@/composables/useGetMyGroups.js'
 import { onMounted, ref } from 'vue'
 import { updateGroup, deleteGroup } from '@/api/getMyGroups.js'
 import type { Group } from '@/types/group.js'
+import { useGetMyGroupsStore } from '@/stores/getMyGroups.js'
 
 const { groups, fetchGroups } = useGetMyGroups();
 const editingGroupId = ref<number | null>(null);
@@ -51,14 +52,24 @@ const startEditing = (group: Group) => {
 };
 
 const saveEdit = async (groupId: number) => {
+
+  const groupStore = useGetMyGroupsStore();
+  const group = groupStore.groups.find(g => g.groupId === groupId);
+
+  if (!group) {
+    console.error('Không tìm thấy group với ID:', groupId);
+    return;
+  }
+
   try {
     await updateGroup({
       groupId,
       nameOfGroup: editedName.value,
-      descriptionOfGroup: editedDescription.value
+      descriptionOfGroup: editedDescription.value,
+      isLeader: group.isLeader,
     });
     editingGroupId.value = null;
-    fetchGroups(); // Refresh danh sách
+    fetchGroups();
   } catch (error) {
     console.error('Lỗi khi cập nhật:', error);
   }

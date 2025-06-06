@@ -2,6 +2,7 @@ export interface Group {
   groupId: number
   nameOfGroup: string
   descriptionOfGroup: string
+  isLeader: boolean
 }
 
 export interface ApiGroupResponse {

@@ -37,17 +37,20 @@
       <div class="menu-container">
         <button class="menu-button" @click="toggleMenu">☰</button>
         <ul v-if="menuOpen" class="menu-dropdown">
-          <li>Thông tin cá nhân</li>
-          <li @click="createGroup">Tạo nhóm công việc mới</li>
-          <li @click="openCreateTask">Thêm mới công việc của nhóm</li>
-          <li @click="console.log('Thêm người dùng')">Thêm người dùng</li>
+          <li @click="handleMyInfo">Thông tin cá nhân</li>
+          <li v-if="canHandleGroup" @click="createGroup">Tạo nhóm công việc mới</li>
+          <li v-if="canCreateTask" @click="openCreateTask">Thêm mới công việc của nhóm</li>
+          <li @click="handleOpenTrash">
+            {{ trashVisible ? 'Đóng' : 'Hiện thị' }} công việc spam
+          </li>
+          <li v-if="canHandleUser" @click="console.log('Thêm người dùng')">Thêm người dùng</li>
           <li @click="console.log('Đổi mật khẩu')">Đổi mật khẩu</li>
           <li @click="logout">Đăng xuất</li>
         </ul>
       </div>
     </header>
   </div>
-  <!-- Hiển thị GroupCreate như modal khi showCreateGroup là true -->
+
   <Teleport to="body">
     <div v-if="showCreateGroup" class="modal-overlay">
       <div class="modal-content">
@@ -64,13 +67,22 @@
     </div>
   </Teleport>
 
+  <Teleport to="body">
+    <div v-if="showMyInfo" class="modal-overlay">
+      <div class="modal-content">
+        <MyInfoLayout @close="closeMyInfo" />
+      </div>
+    </div>
+  </Teleport>
+
 </template>
 
 <script setup lang="ts">
 import GroupCreate from '@/components/CreateGroupLayout.vue';
 import { useHeaderComponent } from "@/components/Header/useHeaderComponent.ts";
 import { formatTime } from '@/utils/formatTime.ts';
-import TaskCreateLayout from '@/components/TaskCreateLayout.vue'
+import TaskCreateLayout from '@/components/TaskCreateLayout.vue';
+import MyInfoLayout from '@/components/MyInfoLayout.vue';
 
 const {
   dropdownOpen, groups, selectedGroup, toggleDropdown, selectGroup, menuOpen, toggleMenu,
@@ -80,8 +92,41 @@ const {
   notifications, notificationsLoading, notificationsError, notificationDropdownOpen, toggleNotificationDropdown,
 
   // Task Creation
-  showCreateTask, closeCreateTask, openCreateTask
+  showCreateTask, closeCreateTask, openCreateTask,
+
+  // My Info
+  showMyInfo, handleMyInfo, closeMyInfo,
 } = useHeaderComponent();
+
+const role = localStorage.getItem('role')
+
+//handle trash
+import { computed, ref } from 'vue'
+import { defineEmits } from 'vue';
+
+const emit = defineEmits<{
+  (e: 'toggle-trash', value: boolean): void;
+}>();
+
+const trashVisible = ref(false);
+
+const handleOpenTrash = () => {
+  trashVisible.value = !trashVisible.value;
+  emit('toggle-trash', trashVisible.value);
+};
+
+//menu logic
+const canCreateTask = computed(() => {
+  return role !== 'ROLE_COLLABORATOR' && role !== 'ROLE_STUDENT'
+})
+
+const canHandleUser = computed(() => {
+  return role !== 'ROLE_COLLABORATOR' && role !== 'ROLE_STUDENT';
+})
+
+const canHandleGroup = computed(() => {
+  return role !== 'ROLE_COLLABORATOR' && role !== 'ROLE_STUDENT';
+})
 
 </script>
 

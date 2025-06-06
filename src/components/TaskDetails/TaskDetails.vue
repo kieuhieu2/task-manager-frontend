@@ -55,7 +55,7 @@
               <p>{{ comment.commentText }}</p>
               <span>{{ comment.userName }}</span>
             </div>
-            <div class="comment-actions">
+            <div class="comment-actions" v-if="comment.userCode === currentUserCode">
               <button @click="handleEditClick(comment.commentId, comment.commentText)">Sửa</button>
               <button @click="handleDeleteComment(comment.commentId)">Xóa</button>
             </div>
@@ -82,7 +82,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue'
 import type { Task } from '@/types/task';
 import { useTaskStore } from '@/stores/taskManager';
 import { createComment, fetchComments, updateComment, deleteComment } from '@/api/commentApi.js';
@@ -167,6 +167,15 @@ const submitComment = async () => {
 };
 
 //cmt
+const currentUserCode = ref<string>('');
+
+onMounted(() => {
+  const storedUserCode = localStorage.getItem('userCode');
+  if (storedUserCode) {
+    currentUserCode.value = storedUserCode;
+  }
+});
+
 const handleEditClick = (commentId: number, currentText: string) => {
   editingCommentId.value = commentId;
   editedCommentText.value = currentText;

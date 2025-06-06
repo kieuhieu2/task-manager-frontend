@@ -1,5 +1,5 @@
 <template>
-  <HeaderOnly />
+  <HeaderOnly @toggle-trash="toggleTrashColumn" />
   <div class="task-manager-container">
     <div class="row">
       <div class="col-3" id="todoColumn">
@@ -59,24 +59,24 @@
         </Draggable>
       </div>
 
-<!--      <div class="col-3" id="spamColumn">-->
-<!--        <h3>Rác</h3>-->
-<!--        <Draggable-->
-<!--          class="list-group"-->
-<!--          :list="list4"-->
-<!--          group="tasks"-->
-<!--          @change="(event) => log(event, TaskState.SPAM)"-->
-<!--          itemKey="taskId"-->
-<!--        >-->
-<!--          <template #item="{ element }">-->
-<!--            <div class="list-group-item" @click="openTaskDetails(groupId, element.taskId)">-->
-<!--              <h5>{{ element.title }}</h5>-->
-<!--              <p>{{ element.description }}</p>-->
-<!--              <p>{{ element.percentDone }}%</p>-->
-<!--            </div>-->
-<!--          </template>-->
-<!--        </Draggable>-->
-<!--      </div>-->
+      <div class="col-3" id="spamColumn" v-if="isTrashVisible">
+        <h3>Rác</h3>
+        <Draggable
+          class="list-group"
+          :list="list4"
+          group="tasks"
+          @change="(event) => log(event, TaskState.SPAM)"
+          itemKey="taskId"
+        >
+          <template #item="{ element }">
+            <div class="list-group-item" @click="openTaskDetails(groupId, element.taskId)">
+              <h5>{{ element.title }}</h5>
+              <p>{{ element.description }}</p>
+              <p>{{ element.percentDone }}%</p>
+            </div>
+          </template>
+        </Draggable>
+      </div>
     </div>
   </div>
 
@@ -103,6 +103,14 @@ import type { Task } from '@/types/task';
 import { updateTask, deleteTask } from '@/api/task.js';
 
 const route = useRoute();
+
+//trash
+import { ref } from 'vue';
+const isTrashVisible = ref(false);
+
+const toggleTrashColumn = (visible: boolean) => {
+  isTrashVisible.value = visible;
+};
 
 const groupId = computed(() => {
   const id = Number(route.params.groupId);

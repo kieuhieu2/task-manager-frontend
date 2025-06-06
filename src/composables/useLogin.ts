@@ -30,7 +30,7 @@ export function useLogin() {
   const login = async () => {
     isLoading.value = true;
     error.value = null;
-
+    localStorage.setItem("username", form.value.username);
     try {
 
       const response = await axios.post<{ result: AuthenticationResponse }>(

@@ -1,6 +1,6 @@
 <template>
   <div class="header-only-layout">
-    <Header />
+    <Header @toggle-trash="$emit('toggle-trash', $event)" />
     <main class="mt-6">
       <slot />
     </main>
