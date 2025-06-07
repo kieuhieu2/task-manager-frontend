@@ -1,7 +1,8 @@
-import { computed, ref } from 'vue'
-import { type Task, TaskState } from '@/types/task.js'
+import { computed, ref } from 'vue';
+import type  { Task } from '@/types/Task.js';
+import { TaskState } from '@/types/Task.js';
 import { useTaskStore } from "@/stores/taskManager.js";
-import { fetchTasks, updateTaskState } from '@/api/task.js'
+import { updateTaskState } from '@/api/task.js'
 import type { ComputedRef } from 'vue';
 
 interface DragEvent {

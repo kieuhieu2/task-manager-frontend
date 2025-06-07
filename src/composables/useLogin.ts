@@ -1,6 +1,5 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { post } from "@/api/axiosInstance.js";
 import type { Ref } from "vue";
 import type { AuthenticationResponse, TokenPayload } from "@/types/auth.js";
 import { jwtDecode } from "jwt-decode";
@@ -9,12 +8,6 @@ import axios from 'axios'
 interface LoginForm {
   username: string;
   password: string;
-}
-
-interface ApiResponse<T> {
-  code?: number;
-  message?: string;
-  result: T;
 }
 
 export function useLogin() {

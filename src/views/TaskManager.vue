@@ -98,8 +98,8 @@ import HeaderOnly from '@/layouts/HeaderOnly/headerOnly.vue';
 import { useTaskManager } from '@/composables/uesTaskManager.js';
 import Draggable from 'vuedraggable';
 import TaskDetails from '@/components/TaskDetails/TaskDetails.vue';
-import { TaskState } from '@/types/task';
-import type { Task } from '@/types/task';
+import { TaskState } from '@/types/task.js';
+import type { Task } from '@/types/task.js';
 import { updateTask, deleteTask } from '@/api/task.js';
 
 const route = useRoute();
@@ -165,5 +165,127 @@ const {
 </script>
 
 <style scoped lang="scss">
-@use './taskManager.module.scss';
+.row {
+  display: flex;
+  justify-content: center;
+  margin-top: 25px;
+  gap: 40px;
+}
+
+.col-3 {
+  width: 23%;
+  background-color: #f8f8f8;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+h3 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.list-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.list-group-item {
+  background-color: white;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+}
+
+.list-group-item h5 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.list-group-item p {
+  font-size: 14px;
+  color: #555;
+}
+
+#todoColumn {
+  background-color: #e8f5e9;
+}
+
+#inProgressColumn {
+  background-color: #fff3e0;
+}
+
+#doneColumn {
+  background-color: #c8e6c9;
+}
+
+#spamColumn {
+  background-color: #ffcdd2;
+}
+.row {
+  display: flex;
+  justify-content: center;
+  margin-top: 25px;
+  gap: 40px;
+}
+
+.col-3 {
+  width: 23%;
+  background-color: #f8f8f8;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+h3 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.list-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.list-group-item {
+  background-color: white;
+  padding: 15px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+}
+
+.list-group-item h5 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.list-group-item p {
+  font-size: 14px;
+  color: #555;
+}
+
+#todoColumn {
+  background-color: #e8f5e9;
+}
+
+#inProgressColumn {
+  background-color: #fff3e0;
+}
+
+#doneColumn {
+  background-color: #c8e6c9;
+}
+
+#spamColumn {
+  background-color: #ffcdd2;
+}
+
 </style>

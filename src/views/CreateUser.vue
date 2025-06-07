@@ -1,5 +1,93 @@
 <style scoped>
-@import "tailwindcss";
+.create-user {
+  width: 400px;
+  margin: 20px auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background: #ffffff;
+
+  h2 {
+    text-align: center;
+    margin-bottom: 15px;
+  }
+
+  .form-group {
+    margin-bottom: 10px;
+
+    label {
+      font-weight: bold;
+      display: block;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+  }
+
+  button {
+    width: 100%;
+    padding: 10px;
+    background: #3498db;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+
+    &:disabled {
+      background: #bdc3c7;
+      cursor: not-allowed;
+    }
+  }
+
+  .success {
+    color: green;
+    text-align: center;
+  }
+
+  .error {
+    color: red;
+    text-align: center;
+  }
+
+  .user-info {
+    margin-top: 20px;
+
+    h3 {
+      text-align: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background: #f4f4f4;
+    }
+
+    .role-badge {
+      display: inline-block;
+      background: #27ae60;
+      color: #fff;
+      padding: 4px 8px;
+      margin: 2px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+  }
+}
+
 </style>
 
 <template>
@@ -120,7 +208,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { createUser } from './useCreateUser';
+import { createUser } from '../composables/useCreateUser.js';
 import type { User } from '@/types/user.ts'
 import HeaderOnly from '@/layouts/HeaderOnly/headerOnly.vue';
 
@@ -146,7 +234,7 @@ const handleCreateUser = async () => {
     createdUser.value = response as User;
     message.value = `Tạo thành công người dùng: ${(response as User).username}`;
     isSuccess.value = true;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   } catch (error: any) {
     if (error.response && error.response.data && error.response.data.message) {
       message.value = error.response.data.message;

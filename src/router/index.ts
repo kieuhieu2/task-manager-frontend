@@ -1,11 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import { permissions } from '@/router/permissions.js';
-import CreateUser from '@/views/CreateUser/createUser.vue';
-import LoginPage from '@/views/Auth/loginPage.vue';
-import GetMyGroups from '@/views/GetMyGroups/getMyGroups.vue';
-import GroupDetails from '@/views/GroupDetails/groupDetails.vue';
-import TaskManager from '@/views/TaskManager/taskManager.vue';
+import CreateUser from '@/views/CreateUser.vue';
+import LoginPage from '@/views/LoginPage.vue';
+import GetMyGroups from '@/views/GetMyGroups.vue';
+import GroupDetails from '@/views/GroupDetails.vue';
+import TaskManager from '@/views/TaskManager.vue';
 
 const   routes = [
     {
@@ -50,32 +50,27 @@ router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token');
   const userRole = localStorage.getItem('role');
 
-  // Nếu route không yêu cầu auth, cho phép đi tiếp
   if (!to.meta.requiresAuth) {
     next();
     return;
   }
 
-  // Nếu không có token hoặc role, chuyển về login
   if (!token || !userRole) {
     next('/login');
     return;
   }
 
-  // Kiểm tra xem role có tồn tại trong permissions không
   if (!permissions[userRole]) {
-    next('/login'); // Role không hợp lệ
+    next('/login');
     return;
   }
 
-  // Kiểm tra xem path đích có trong danh sách quyền của role không
   const allowedPaths = permissions[userRole];
   if (!allowedPaths.includes(to.path)) {
-    next('/login'); // Role không có quyền truy cập, chuyển về login
+    next('/login');
     return;
   }
 
-  // Nếu hợp lệ, cho phép đi tiếp
   next();
 });
 
