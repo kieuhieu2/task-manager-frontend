@@ -5,6 +5,9 @@ import type { Ref } from "vue";
 import type { AuthenticationResponse, TokenPayload } from "@/types/auth.js";
 import { jwtDecode } from "jwt-decode";
 import axios from 'axios'
+import { useTaskStore } from "@/stores/taskManager.js";
+import { useGetMyGroupsStore } from '@/stores/getMyGroups.ts'
+import { useNotificationStore } from '@/stores/notificationStore.ts'
 
 interface LoginForm {
   username: string;
@@ -58,13 +61,17 @@ export function useLogin() {
 
   // Additional method for logout (for reusability)
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    localStorage.removeItem("userCode");
+    const taskStore = useTaskStore();
+    const notificationStore = useNotificationStore();
+    const useGetMyGroupsStore = useNotificationStore();
+
+    localStorage.clear();
+    taskStore.$reset();
+    notificationStore.$reset();
+    useGetMyGroupsStore.$reset()
     router.push("/login");
   };
 
-  // Reset form (useful for after login or on page load)
   const resetForm = () => {
     form.value = { username: "", password: "" };
     error.value = null;

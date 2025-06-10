@@ -45,5 +45,19 @@ export async function updateMyInfo(formData: FormData): Promise<User> {
   }
 }
 
+export async function getFullNameByUserCode(userCode: String): Promise<string> {
+  try {
+    const res = await axiosInstance.get(`/users/find-full-name/${userCode}`,{
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+
+    return res.data.result;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Không thể lấy thông tin người dùng');
+  }
+}
+
 
 

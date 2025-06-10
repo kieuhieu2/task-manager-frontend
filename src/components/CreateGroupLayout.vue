@@ -1,8 +1,18 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { createGroup } from '@/api/getMyGroups.js';
+import { getFullNameByUserCode} from '@/api/userApi.js'
 
 interface GroupCreate {
+  nameOfGroup: string;
+  faculty: string;
+  department: string;
+  memberCodes: { userCode: string; fullName: string }[];
+  leaderCodes: { leaderCode: string; fullName: string }[];
+  descriptionOfGroup: string;
+}
+
+interface GroupCreatePayload {
   nameOfGroup: string;
   faculty: string;
   department: string;
@@ -24,19 +34,34 @@ const newMemberCode = ref('');
 const newLeaderCode = ref('');
 const error = ref<string | null>(null);
 
-const addMemberCode = () => {
-  if (newMemberCode.value.trim()) {
-    group.value.memberCodes.push(newMemberCode.value.trim());
+const addMemberCode = async () => {
+  const userCode = newMemberCode.value.trim();
+  if (!userCode) return;
+
+  try {
+    const fullName = await getFullNameByUserCode(userCode);
+    group.value.memberCodes.push({ userCode, fullName });
     newMemberCode.value = '';
+  } catch (err: any) {
+    error.value = err.message || 'Không thể thêm mã thành viên';
+    console.error('Lỗi khi thêm mã thành viên:', err);
   }
 };
 
-const addLeaderCode = () => {
-  if (newLeaderCode.value.trim()) {
-    group.value.leaderCodes.push(newLeaderCode.value.trim());
+const addLeaderCode = async () => {
+  const userCode = newLeaderCode.value.trim();
+  if (!userCode) return;
+
+  try {
+    const fullName = await getFullNameByUserCode(userCode);
+    group.value.leaderCodes.push({ leaderCode: userCode, fullName });
     newLeaderCode.value = '';
+  } catch (err: any) {
+    error.value = err.message || 'Không thể thêm mã trưởng nhóm';
+    console.error('Lỗi khi thêm mã trưởng nhóm:', err);
   }
 };
+
 
 const removeMemberCode = (index: number) => {
   group.value.memberCodes.splice(index, 1);
@@ -48,13 +73,33 @@ const removeLeaderCode = (index: number) => {
 
 const createGroupHandler = async () => {
   try {
-    await createGroup(group.value);
-    // router.push({ name: 'GroupList' }); // Chuyển hướng sau khi tạo thành công
+    const payload: GroupCreatePayload = {
+      nameOfGroup: group.value.nameOfGroup,
+      faculty: group.value.faculty,
+      department: group.value.department,
+      descriptionOfGroup: group.value.descriptionOfGroup,
+      memberCodes: group.value.memberCodes.map(member => member.userCode),
+      leaderCodes: group.value.leaderCodes.map(leader => leader.leaderCode),
+    };
+
+    await createGroup(payload);
+    // router.push({ name: 'GroupList' });
   } catch (err: any) {
     error.value = err.message || 'Không thể tạo nhóm mới';
     console.error('Lỗi khi tạo nhóm:', err);
   }
 };
+
+const handleEnterAddMember = (event: KeyboardEvent) => {
+  event.preventDefault();
+  addMemberCode();
+};
+
+const handleAddLeaderCode = (event: KeyboardEvent) => {
+  event.preventDefault();
+  addLeaderCode();
+}
+
 </script>
 
 <template>
@@ -84,12 +129,12 @@ const createGroupHandler = async () => {
         <div class="form-group">
           <label>Mã thành viên:</label>
           <div class="code-input">
-            <input v-model="newMemberCode" type="text" placeholder="Nhập mã thành viên" @keyup.enter="addMemberCode" />
+            <input v-model="newMemberCode" type="text" placeholder="Nhập mã thành viên" @keydown.enter.prevent="handleEnterAddMember" />
             <button type="button" @click="addMemberCode" class="add-btn">Thêm</button>
           </div>
           <div class="code-list">
-            <div v-for="(code, index) in group.memberCodes" :key="index" class="code-item">
-              <span>{{ code }}</span>
+            <div v-for="(item, index) in group.memberCodes" :key="index" class="code-item">
+              <span>{{ item.fullName }} ({{ item.userCode }})</span>
               <button type="button" @click="removeMemberCode(index)" class="remove-btn">X</button>
             </div>
           </div>
@@ -98,12 +143,12 @@ const createGroupHandler = async () => {
         <div class="form-group">
           <label>Mã trưởng nhóm:</label>
           <div class="code-input">
-            <input v-model="newLeaderCode" type="text" placeholder="Nhập mã trưởng nhóm" @keyup.enter="addLeaderCode" />
+            <input v-model="newLeaderCode" type="text" placeholder="Nhập mã trưởng nhóm" @keydown.enter.prevent="handleAddLeaderCode" />
             <button type="button" @click="addLeaderCode" class="add-btn">Thêm</button>
           </div>
           <div class="code-list">
-            <div v-for="(code, index) in group.leaderCodes" :key="index" class="code-item">
-              <span>{{ code }}</span>
+            <div v-for="(item, index) in group.leaderCodes" :key="index" class="code-item">
+              <span>{{ item.fullName }} ({{ item.leaderCode }})</span>
               <button type="button" @click="removeLeaderCode(index)" class="remove-btn">X</button>
             </div>
           </div>
