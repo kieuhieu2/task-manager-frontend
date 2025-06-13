@@ -4,7 +4,7 @@ export const useTaskDetails = () => {
   const taskStore = useTaskStore();
 
   const openTaskDetails = async (groupId: number, taskId: number) => {
-    await taskStore.openTask(groupId, taskId); // Call the openTask method to fetch the file
+    await taskStore.openTask(groupId, taskId);
   };
 
   return {

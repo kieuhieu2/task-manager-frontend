@@ -11,8 +11,9 @@ export async function createUser(formData: FormData): Promise<User> {
     });
 
     return res.data.result;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Không thể tạo người dùng');
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(err.response?.data?.message || 'Không thể tạo người dùng');
   }
 }
 
@@ -25,8 +26,9 @@ export async function getMyInfo(): Promise<User> {
     });
 
     return res.data.result;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Không thể lấy thông tin người dùng');
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(err.response?.data?.message || 'Không thể lấy thông tin người dùng');
   }
 }
 
@@ -40,8 +42,9 @@ export async function updateMyInfo(formData: FormData): Promise<User> {
     });
 
     return res.data.result;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Không thể lấy thông tin người dùng');
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(err.response?.data?.message || 'Không thể cập nhập thông tin người dùng');
   }
 }
 
@@ -54,8 +57,9 @@ export async function getFullNameByUserCode(userCode: String): Promise<string> {
     });
 
     return res.data.result;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Không thể lấy thông tin người dùng');
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(err.response?.data?.message || 'Không thể lấy thông tin người dùng');
   }
 }
 

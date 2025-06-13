@@ -1,9 +1,9 @@
-import type { Task } from '@/types/Task.ts'
+import type { Task } from '@/types/task.js'
 import type { ApiResponse } from '@/types/api.js'
 import { get, put, post } from './axiosInstance.js'
 import axiosInstance from './axiosInstance.js';
 
-export async function createTask(formData: FormData): Promise<any> {
+export async function createTask(formData: FormData): Promise<Task> {
   try {
     const res = await axiosInstance.post('/tasks', formData, {
       headers: {
@@ -13,8 +13,9 @@ export async function createTask(formData: FormData): Promise<any> {
     });
 
     return res.data.result;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Không thể tạo task');
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(err.response?.data?.message || 'Không thể tạo task');
   }
 }
 
@@ -23,8 +24,9 @@ export async function fetchTasks(groupId: number): Promise<Task[] | undefined> {
     const res: ApiResponse<Task[]> = await get(`/tasks/${groupId}`, {})
 
     return res.result
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Không thể lấy danh sách công việc')
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(err.response?.data?.message || 'Không thể lấy danh sách công việc')
   }
 }
 

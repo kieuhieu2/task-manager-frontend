@@ -165,5 +165,5 @@ const {
 </script>
 
 <style scoped lang="scss">
-@use './taskManager.module.scss';
+@use '../../../../../.Trash/taskManager.module';
 </style>

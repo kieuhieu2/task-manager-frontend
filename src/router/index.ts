@@ -1,11 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import { permissions } from '@/router/permissions.js';
-import CreateUser from '@/views/CreateUser/createUser.vue';
-import LoginPage from '@/views/Auth/loginPage.vue';
-import GetMyGroups from '@/views/GetMyGroups/getMyGroups.vue';
-import GroupDetails from '@/views/GroupDetails/groupDetails.vue';
-import TaskManager from '@/views/TaskManager/taskManager.vue';
+import CreateUser from '@/views/createUser.vue';
+import LoginPage from '@/views/loginPage.vue';
+import GetMyGroups from '@/views/getMyGroups.vue';
+import GroupDetails from '@/views/groupDetails.vue';
+import TaskManager from '@/views/TaskManager.vue';
 
 const   routes = [
     {
