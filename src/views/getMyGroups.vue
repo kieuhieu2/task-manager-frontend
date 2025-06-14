@@ -11,6 +11,7 @@
         <textarea v-model="editedDescription" class="edit-textarea"></textarea>
         <div class="action-buttons">
           <button @click="saveEdit(group.groupId)" class="save-button">Lưu</button>
+          <button @click="showGroupMembers(group)" class="members-button">Thành viên</button>
           <button @click="editingGroupId = null" class="cancel-button">Hủy</button>
         </div>
       </div>
@@ -21,25 +22,42 @@
         <p class="group-description">{{ group.descriptionOfGroup }}</p>
         <div class="action-buttons" v-if="group.isLeader">
           <button @click="startEditing(group)" class="edit-button">Sửa</button>
+          <button @click="showGroupMembers(group)" class="members-button">Thành viên</button>
           <button @click="deleteGroupHandler(group.groupId)" class="delete-button">Xóa</button>
+        </div>
+        <div class="action-buttons" v-else>
+          <button @click="showGroupMembers(group)" class="members-button">Thành viên</button>
         </div>
       </div>
     </div>
   </div>
+
+  <GroupMembersLayout
+    v-if="showMembersModal"
+    :groupId="selectedGroupId"
+    :isLeader="selectedGroupIsLeader"
+    @close="closeMembersModal"
+  />
 </template>
 
 <script setup lang="ts">
 import HeaderOnly from '@/layouts/HeaderOnly/headerOnly.vue'
+import GroupMembersLayout from '@/components/GroupMembersLayout.vue'
 import { useGetMyGroups } from '@/composables/useGetMyGroups.js'
 import { onMounted, ref } from 'vue'
-import { updateGroup, deleteGroup } from '@/api/getMyGroups.js'
+import { updateGroup, deleteGroup } from '@/api/GroupsApi.js'
 import type { Group } from '@/types/group.js'
-import { useGetMyGroupsStore } from '@/stores/getMyGroups.js'
+import { useGetMyGroupsStore } from '@/stores/groupsStore.js'
 
 const { groups, fetchGroups } = useGetMyGroups();
 const editingGroupId = ref<number | null>(null);
 const editedName = ref('');
 const editedDescription = ref('');
+
+// New refs for the members modal
+const showMembersModal = ref(false);
+const selectedGroupId = ref<number>(0);
+const selectedGroupIsLeader = ref(false);
 
 onMounted(() => {
   fetchGroups();
@@ -70,8 +88,9 @@ const saveEdit = async (groupId: number) => {
     });
     editingGroupId.value = null;
     fetchGroups();
-  } catch (error) {
-    console.error('Lỗi khi cập nhật:', error);
+  } catch (error: unknown) {
+    const err = error as { message?: string };
+    console.error('Lỗi khi cập nhật:', err.message || error);
   }
 };
 
@@ -80,10 +99,22 @@ const deleteGroupHandler = async (groupId: number) => {
     try {
       await deleteGroup(groupId);
       fetchGroups(); // Refresh danh sách
-    } catch (error) {
-      console.error('Lỗi khi xóa:', error);
+    } catch (error: unknown) {
+      const err = error as { message?: string };
+      console.error('Lỗi khi xóa:', err.message || error);
     }
   }
+};
+
+// handle show group members modal
+const showGroupMembers = (group: Group) => {
+  selectedGroupId.value = group.groupId;
+  selectedGroupIsLeader.value = group.isLeader;
+  showMembersModal.value = true;
+};
+
+const closeMembersModal = () => {
+  showMembersModal.value = false;
 };
 </script>
 
@@ -138,6 +169,7 @@ const deleteGroupHandler = async (groupId: number) => {
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 12;
+  line-clamp: 12;
   -webkit-box-orient: vertical;
   line-height: 1.4;
   flex-grow: 1;
@@ -159,6 +191,18 @@ const deleteGroupHandler = async (groupId: number) => {
   cursor: pointer;
   &:hover {
     background-color: #218838;
+  }
+}
+
+.members-button {
+  background-color: #17a2b8;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  &:hover {
+    background-color: #138496;
   }
 }
 

@@ -4,7 +4,6 @@ import { permissions } from '@/router/permissions.js';
 import CreateUser from '@/views/createUser.vue';
 import LoginPage from '@/views/loginPage.vue';
 import GetMyGroups from '@/views/getMyGroups.vue';
-import GroupDetails from '@/views/groupDetails.vue';
 import TaskManager from '@/views/TaskManager.vue';
 
 const   routes = [
@@ -28,11 +27,6 @@ const   routes = [
     path: "/get-my-groups",
     name: 'getMyGroups',
     component: GetMyGroups,
-  },
-  {
-    path: '/group-details/:id',
-    name: 'groupDetails',
-    component: GroupDetails,
   },
   {
     path: '/task-manager/:groupId',

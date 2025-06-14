@@ -84,7 +84,7 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
 import type { Task } from '@/types/task';
-import { useTaskStore } from '@/stores/taskManager';
+import { useTaskStore } from '@/stores/taskStore.js';
 import { createComment, fetchComments, updateComment, deleteComment } from '@/api/commentApi.js';
 
 const props = defineProps<{

@@ -1,5 +1,5 @@
 import { ref, watch } from 'vue';
-import { useTaskStore } from '@/stores/taskManager.ts';
+import { useTaskStore } from '@/stores/taskStore.ts';
 import type { Task } from '@/types/task.js';
 import { onMounted } from 'vue';
 import { useCommentsStore } from '@/stores/commentStore.js'

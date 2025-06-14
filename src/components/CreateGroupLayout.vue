@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { createGroup } from '@/api/getMyGroups.js';
+import { createGroup } from '@/api/GroupsApi.js';
 import { getFullNameByUserCode} from '@/api/userApi.js'
 
 interface GroupCreate {

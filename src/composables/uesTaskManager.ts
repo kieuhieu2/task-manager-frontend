@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import { type Task, TaskState } from '@/types/task.js'
-import { useTaskStore } from "@/stores/taskManager.js";
-import { fetchTasks, updateTaskState } from '@/api/task.js'
+import { useTaskStore } from "@/stores/taskStore.js";
+import { updateTaskState } from '@/api/task.js'
 import type { ComputedRef } from 'vue';
 
 interface DragEvent {
@@ -69,7 +69,7 @@ export function useTaskManager(groupId: ComputedRef<number | null>) {
       console.log("Added to state:", newState);
     } else if (event.moved) {
       task = event.moved.element;
-      console.log("Moved within state:", newState);
+      console.log("Moved within state:", newState, task);
       return; // Thoát sớm nếu chỉ di chuyển trong cùng cột
     } else if (event.removed) {
       task = event.removed.element;

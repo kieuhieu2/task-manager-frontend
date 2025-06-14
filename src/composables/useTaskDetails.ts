@@ -1,4 +1,4 @@
-import { useTaskStore } from '@/stores/taskManager.ts';
+import { useTaskStore } from '@/stores/taskStore.ts';
 
 export const useTaskDetails = () => {
   const taskStore = useTaskStore();

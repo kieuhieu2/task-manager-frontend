@@ -1,6 +1,6 @@
 import { ref, computed, onMounted, defineEmits } from 'vue'
 import { useRouter } from 'vue-router';
-import { useGetMyGroupsStore } from '@/stores/getMyGroups.js';
+import { useGetMyGroupsStore } from '@/stores/groupsStore.js';
 import type { Group } from '@/types/group.js';
 import { useNotificationStore } from '@/stores/notificationStore.js'
 import { storeToRefs } from 'pinia'

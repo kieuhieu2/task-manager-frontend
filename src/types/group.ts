@@ -19,3 +19,17 @@ export interface GroupCreate {
   leaderCodes: string[];
   descriptionOfGroup: string;
 }
+
+export interface GroupMember {
+  userCode: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
+  role?: string;
+}
+
+export interface ApiGroupMemberResponse {
+  code: number;
+  message: string;
+  result: GroupMember[];
+}

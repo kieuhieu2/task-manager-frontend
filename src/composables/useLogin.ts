@@ -5,8 +5,8 @@ import type { Ref } from "vue";
 import type { AuthenticationResponse, TokenPayload } from "@/types/auth.js";
 import { jwtDecode } from "jwt-decode";
 import axios from 'axios'
-import { useTaskStore } from "@/stores/taskManager.js";
-import { useGetMyGroupsStore } from '@/stores/getMyGroups.ts'
+import { useTaskStore } from "@/stores/taskStore.js";
+import { useGetMyGroupsStore } from '@/stores/groupsStore.ts'
 import { useNotificationStore } from '@/stores/notificationStore.ts'
 
 interface LoginForm {
