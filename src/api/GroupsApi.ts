@@ -16,7 +16,6 @@ export async function fetchGetMyGroups(): Promise<Group[]> {
         },
       }
     );
-    console.log("réultl ", res.result);
     return res.result;
   } catch (error: unknown) {
     const err = error as {response?: {data?: {message?: string}}};
@@ -159,27 +158,5 @@ export async function getGroupMembers(groupId: number): Promise<GroupMember[]> {
   } catch (error: unknown) {
     const err = error as {response?: {data?: {message?: string}}};
     throw new Error(err.response?.data?.message || 'Không thể lấy danh sách thành viên nhóm');
-  }
-}
-
-export async function getGroupLeaders(groupId: number): Promise<GroupMember[]> {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    throw new Error('No token found. Please log in.');
-  }
-
-  try {
-    const response: ApiGroupMemberResponse = await get(
-      `/groups/get-leader/${groupId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    return response.result;
-  } catch (error: unknown) {
-    const err = error as {response?: {data?: {message?: string}}};
-    throw new Error(err.response?.data?.message || 'Không thể lấy danh sách trưởng nhóm');
   }
 }

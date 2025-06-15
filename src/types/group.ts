@@ -26,6 +26,7 @@ export interface GroupMember {
   lastName: string;
   email?: string;
   role?: string;
+  isLeader?: boolean;
 }
 
 export interface ApiGroupMemberResponse {

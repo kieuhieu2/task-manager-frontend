@@ -29,15 +29,23 @@
         >
           Trưởng nhóm
         </button>
-        <button
-          :class="['tab-button', { active: activeTab === 'addMember' }]"
-          @click="activeTab = 'addMember'"
-        >
-          Thêm thành viên
-        </button>
       </div>
 
       <div v-if="activeTab === 'members'" class="table-container">
+
+        <div v-if="currentUserIsLeader" class="add-member-form">
+          <input
+            v-model="newMemberCode"
+            type="text"
+            placeholder="Nhập mã người dùng"
+            class="search-input"
+          />
+          <button @click="addMember" class="add-button">Thêm thành viên</button>
+        </div>
+        <p v-if="addMemberMessage" class="member-message" :class="{ 'member-error': addMemberError }">
+          {{ addMemberMessage }}
+        </p>
+
         <table class="members-table">
           <thead>
             <tr>
@@ -68,38 +76,46 @@
       </div>
 
       <div v-if="activeTab === 'leaders'" class="table-container">
+        <div v-if="currentUserIsLeader" class="add-member-form">
+          <input
+            v-model="newLeaderCode"
+            type="text"
+            placeholder="Nhập mã người dùng"
+            class="search-input"
+          />
+          <button @click="addLeader" class="add-button">Thêm trưởng nhóm</button>
+        </div>
+        <p v-if="addLeaderMessage" class="member-message" :class="{ 'member-error': addLeaderError }">
+          {{ addLeaderMessage }}
+        </p>
+
         <table class="leaders-table">
           <thead>
             <tr>
               <th>Mã số</th>
               <th>Họ và tên</th>
+              <th>Hành động</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="leader in leaders" :key="leader.userCode">
               <td>{{ leader.userCode }}</td>
               <td>{{ leader.firstName }} {{ leader.lastName }}</td>
+              <td class="actions">
+                <button
+                  v-if="currentUserCode === leader.userCode"
+                  @click="confirmRemoveLeader(leader)"
+                  class="remove-button"
+                >
+                  Xóa
+                </button>
+              </td>
             </tr>
             <tr v-if="leaders.length === 0">
-              <td colspan="2" class="no-data">Không có trưởng nhóm nào</td>
+              <td colspan="3" class="no-data">Không có trưởng nhóm nào</td>
             </tr>
           </tbody>
         </table>
-      </div>
-
-      <div v-if="activeTab === 'addMember'" class="add-member-container">
-        <div class="add-member-form">
-          <input
-            v-model="newMemberCode"
-            type="text"
-            placeholder="Nhập mã người dùng"
-            class="search-input"
-          />
-          <button @click="addMember" class="add-button">Thêm</button>
-        </div>
-        <p v-if="addMemberMessage" class="member-message" :class="{ 'member-error': addMemberError }">
-          {{ addMemberMessage }}
-        </p>
       </div>
     </div>
   </div>
@@ -107,7 +123,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, defineProps, defineEmits } from 'vue'
-import { getGroupMembers, getGroupLeaders, addUserToGroup, removeUserFromGroup } from '@/api/GroupsApi'
+import { getGroupMembers, addUserToGroup, removeUserFromGroup } from '@/api/GroupsApi'
 import type { GroupMember } from '@/types/group'
 
 const props = defineProps<{
@@ -124,27 +140,24 @@ const activeTab = ref('members')
 const error = ref('')
 const searchTerm = ref('')
 const currentUserIsLeader = ref(props.isLeader)
+const currentUserCode = ref(localStorage.getItem('userCode') || '')
 const newMemberCode = ref('')
 const addMemberMessage = ref('')
 const addMemberError = ref(false)
+const newLeaderCode = ref('')
+const addLeaderMessage = ref('')
+const addLeaderError = ref(false)
 
 const fetchMembers = async () => {
   try {
-    members.value = await getGroupMembers(props.groupId)
-    error.value = ''
+    members.value = await getGroupMembers(props.groupId);
+    error.value = '';
+
+    leaders.value = members.value.filter(member => member.isLeader);
+
   } catch (err: unknown) {
     const e = err as { message?: string }
     error.value = e?.message || 'Không thể lấy danh sách thành viên'
-  }
-}
-
-const fetchLeaders = async () => {
-  try {
-    leaders.value = await getGroupLeaders(props.groupId)
-    error.value = ''
-  } catch (err: unknown) {
-    const e = err as { message?: string }
-    error.value = e?.message || 'Không thể lấy danh sách trưởng nhóm'
   }
 }
 
@@ -166,13 +179,6 @@ const searchUsers = () => {
       )
     })
   } else if (activeTab.value === 'leaders') {
-    // Filter leaders
-    fetchLeaders().then(() => {
-      leaders.value = leaders.value.filter(leader =>
-        leader.userCode.toLowerCase().includes(term) ||
-        `${leader.firstName} ${leader.lastName}`.toLowerCase().includes(term)
-      )
-    })
   }
 }
 
@@ -208,9 +214,40 @@ const confirmRemoveMember = async (member: GroupMember) => {
   }
 }
 
+const addLeader = async () => {
+  if (!newLeaderCode.value.trim()) {
+    addLeaderMessage.value = 'Vui lòng nhập mã người dùng'
+    addLeaderError.value = true
+    return
+  }
+
+  try {
+    await addUserToGroup(props.groupId, newLeaderCode.value.trim())
+    addLeaderMessage.value = 'Thêm trưởng nhóm thành công'
+    addLeaderError.value = false
+    newLeaderCode.value = ''
+    fetchMembers()
+  } catch (err: unknown) {
+    const e = err as { message?: string }
+    addLeaderMessage.value = e?.message || 'Không thể thêm trưởng nhóm'
+    addLeaderError.value = true
+  }
+}
+
+const confirmRemoveLeader = async (leader: GroupMember) => {
+  if (confirm(`Bạn có chắc muốn xóa trưởng nhóm ${leader.firstName} ${leader.lastName}?`)) {
+    try {
+      await removeUserFromGroup(props.groupId, leader.userCode)
+      await fetchMembers()
+    } catch (err: unknown) {
+      const e = err as { message?: string }
+      error.value = e?.message || 'Không thể xóa trưởng nhóm'
+    }
+  }
+}
+
 onMounted(() => {
   fetchMembers()
-  fetchLeaders()
 })
 </script>
 

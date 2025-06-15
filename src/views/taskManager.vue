@@ -15,7 +15,10 @@
             <div class="list-group-item" @click="openTaskDetails(groupId, element.taskId)">
               <h5>{{ element.title }}</h5>
               <p>{{ element.description }}</p>
-              <p>{{ element.percentDone }}%</p>
+              <div class="task-status-row">
+                <p>{{ element.percentDone }}%</p>
+                <p v-if="element.isCreator" style="color: red;">Bạn là người giao công việc này</p>
+              </div>
             </div>
           </template>
         </Draggable>
@@ -34,7 +37,10 @@
             <div class="list-group-item" @click="openTaskDetails(groupId, element.taskId)">
               <h5>{{ element.title }}</h5>
               <p>{{ element.description }}</p>
-              <p>{{ element.percentDone }}%</p>
+              <div class="task-status-row">
+                <p>{{ element.percentDone }}%</p>
+                <p v-if="element.isCreator" style="color: red;">Bạn là người giao công việc này</p>
+              </div>
             </div>
           </template>
         </Draggable>
@@ -53,7 +59,10 @@
             <div class="list-group-item" @click="openTaskDetails(groupId, element.taskId)">
               <h5>{{ element.title }}</h5>
               <p>{{ element.description }}</p>
-              <p>{{ element.percentDone }}%</p>
+              <div class="task-status-row">
+                <p>{{ element.percentDone }}%</p>
+                <p v-if="element.isCreator" style="color: red;">Bạn là người giao công việc này</p>
+              </div>
             </div>
           </template>
         </Draggable>
@@ -72,7 +81,10 @@
             <div class="list-group-item" @click="openTaskDetails(groupId, element.taskId)">
               <h5>{{ element.title }}</h5>
               <p>{{ element.description }}</p>
-              <p>{{ element.percentDone }}%</p>
+              <div class="task-status-row">
+                <p>{{ element.percentDone }}%</p>
+                <p v-if="element.isCreator" style="color: red;">Bạn là người giao công việc này</p>
+              </div>
             </div>
           </template>
         </Draggable>
@@ -225,6 +237,12 @@ h3 {
 
 #spamColumn {
   background-color: #ffcdd2;
+}
+
+.task-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 </style>

@@ -9,25 +9,29 @@
 
         <p>
           <strong>Tiêu đề:</strong>
-          <span v-if="!isEditing">{{ editedTask.title }}</span>
+          <span v-if="!isEditing || !task?.isCreator">{{ editedTask.title }}</span>
           <input v-else v-model="editedTask.title" />
         </p>
 
         <p>
           <strong>Mô tả công việc:</strong>
-          <span v-if="!isEditing">{{ editedTask.description }}</span>
+          <span v-if="!isEditing || !task?.isCreator">{{ editedTask.description }}</span>
           <textarea v-else v-model="editedTask.description"></textarea>
         </p>
 
         <p>
           <strong>Phần trăm hoàn thành:</strong>
-          <span v-if="!isEditing">{{ editedTask.percentDone }}%</span>
+          <span v-if="!isEditing || !task?.isCreator">{{ editedTask.percentDone }}%</span>
           <input v-else type="number" v-model="editedTask.percentDone" />
         </p>
 
         <p><strong>ID người dùng:</strong> {{ task.userId }}</p>
         <p><strong>ID của nhóm:</strong> {{ task.groupId }}</p>
         <p><strong>Trạng thái công việc:</strong> {{ task.state }}</p>
+
+        <p v-if="task.isCreator" class="progress-link" @click="toggleProgressView">
+          <strong>Tiến độ các thành viên thực hiện</strong>
+        </p>
 
         <p v-if="taskStore.selectedTaskFile">
           <strong>Tệp đính kèm:</strong>
@@ -70,9 +74,11 @@
       </div>
 
       <div class="actions">
-        <button @click="$emit('delete-task')" class="delete-btn">Xóa công việc</button>
-        <button @click="toggleEdit" class="edit-btn">{{ isEditing ? "Lưu" : "Sửa công việc" }}</button>
+        <button v-if="task?.isCreator" @click="$emit('delete-task')" class="delete-btn">Xóa công việc</button>
+        <button v-if="task?.isCreator" @click="toggleEdit" class="edit-btn">{{ isEditing ? "Lưu" : "Sửa công việc" }}</button>
       </div>
+
+      <WorkProgressOfMenberLayout v-if="showProgressView && task?.isCreator" @close="showProgressView = false" />
     </div>
     <div class="task-details-modal" v-else>
       <button class="close-btn" @click="$emit('close')">[x]</button>
@@ -86,6 +92,15 @@ import { onMounted, ref, watch } from 'vue'
 import type { Task } from '@/types/task';
 import { useTaskStore } from '@/stores/taskStore.js';
 import { createComment, fetchComments, updateComment, deleteComment } from '@/api/commentApi.js';
+import WorkProgressOfMenberLayout from '@/components/WorkProgressOfMenberLayout.vue';
+
+// Local interface declaration to resolve type conflicts
+interface Comment {
+  commentId: number;
+  commentText: string;
+  userName: string;
+  userCode: string;
+}
 
 const props = defineProps<{
   task: Task | null;
@@ -104,6 +119,7 @@ const newComment = ref('');
 const comments = ref<Comment[]>([]);
 const editingCommentId = ref<number | null>(null);
 const editedCommentText = ref<string>('');
+const showProgressView = ref(false);
 
 watch(() => props.task, async (newTask) => {
   if (newTask) {
@@ -120,13 +136,17 @@ watch(() => props.task, async (newTask) => {
 const loadComments = async (taskId: number) => {
   try {
     const result = await fetchComments(taskId);
-    comments.value = result || [];
+    comments.value = (result || []) as { commentId: number; commentText: string; userName: string; userCode: string }[];
   } catch (error) {
     console.error('Không thể tải comment:', error);
   }
 };
 
 const toggleEdit = () => {
+  if (!props.task?.isCreator) {
+    return;
+  }
+
   if (isEditing.value && editedTask.value) {
     emit('update-task', editedTask.value);
   }
@@ -216,8 +236,22 @@ const handleDeleteComment = async (commentId: number) => {
     alert('Xóa bình luận thất bại');
   }
 };
+
+const toggleProgressView = () => {
+  showProgressView.value = !showProgressView.value;
+};
 </script>
 
 <style scoped lang="scss">
 @use './TaskDetails.module.scss';
+
+.progress-link {
+  color: #007bff;
+  cursor: pointer;
+  text-decoration: underline;
+
+  &:hover {
+    color: #0056b3;
+  }
+}
 </style>

@@ -61,6 +61,23 @@ export async function updateTask(editedTask: Task): Promise<Task> {
   }
 }
 
+export interface WorkProgress {
+  userCode: string;
+  state: string;
+  percentDone: number;
+  updatedAt: string;
+}
+
+export async function fetchWorkProgress(taskId: number): Promise<WorkProgress[]> {
+  try {
+    const res: ApiResponse<WorkProgress[]> = await get(`/tasks/work-progress/${taskId}`, {});
+    return res.result || [];
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(err.response?.data?.message || 'Không thể lấy tiến độ công việc');
+  }
+}
+
 export const getFileOfTask = async (taskId: number): Promise<{ fileUrl: string; fileType?: string; fileName?: string }> => {
   try {
     const response = await axiosInstance.get(`/tasks/file/${taskId}`, {

@@ -8,6 +8,7 @@ export interface Task {
   state: TaskState;
   fileUrl?: string
   fileType?: string
+  isCreator?: boolean
 }
 
 export enum TaskState {
