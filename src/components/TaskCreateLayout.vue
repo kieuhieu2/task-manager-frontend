@@ -29,27 +29,36 @@
           <input type="number" v-model="form.percentDone" min="0" max="100" required />
         </div>
 
-        <div class="form-group">
-          <label>Người được giao (nếu muốn giao riêng cho ai đó):</label>
+        <div>
+          <label>Loại công việc:</label>
+          <select v-model="form.taskType" required>
+            <option value="PUBLIC_TASK">Việc chung của nhóm</option>
+            <option value="PRIVATE_TASK">Việc riêng cho các cá nhân</option>
+          </select>
+        </div>
+
+        <div v-if="form.taskType === 'PRIVATE_TASK'" class="form-group">
+          <label>Người được giao:</label>
           <div class="code-input">
             <input
               v-model="newAssignee"
               type="text"
               placeholder="Nhập mã người dùng"
-              @keyup.enter="addAssignee"
+              @keydown.enter.prevent="handleEnterAddAssignee"
             />
             <button type="button" class="add-btn" @click="addAssignee">Thêm</button>
           </div>
           <div class="code-list">
             <div
-              v-for="(code, index) in form.assigneesUserCodes"
+              v-for="(assignee, index) in form.assignees"
               :key="index"
               class="code-item"
             >
-              <span>{{ code }}</span>
-              <button type="button" class="remove-btn" @click="removeAssignee(index)">X</button>
+              <span>{{ assignee.fullName || 'User not existed' }} ({{ assignee.userCode }})</span>
+              <button type="button" class="remove-btn" @click="removeAssignee(index)">×</button>
             </div>
           </div>
+          <p v-if="error" class="error-message">{{ error }}</p>
         </div>
 
         <div>
@@ -66,6 +75,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { createTask } from '@/api/task.ts';
+import { getFullNameByUserCode } from '@/api/userApi.ts';
 
 const emit = defineEmits(['close', 'submitted']);
 
@@ -75,7 +85,8 @@ const form = ref({
   title: '',
   description: '',
   percentDone: 0,
-  assigneesUserCodes: [] as string[],
+  taskType: 'PUBLIC_TASK',
+  assignees: [] as Array<{ userCode: string; fullName: string }>,
   file: null as File | null,
 });
 
@@ -88,17 +99,30 @@ onMounted(() => {
 });
 
 const newAssignee = ref('');
+const error = ref<string | null>(null);
 
-function addAssignee() {
-  const trimmed = newAssignee.value.trim();
-  if (trimmed && !form.value.assigneesUserCodes.includes(trimmed)) {
-    form.value.assigneesUserCodes.push(trimmed);
+const handleEnterAddAssignee = (event: KeyboardEvent) => {
+  event.preventDefault();
+  addAssignee();
+};
+
+async function addAssignee() {
+  const userCode = newAssignee.value.trim();
+  if (!userCode) return;
+
+  try {
+    const fullName = await getFullNameByUserCode(userCode);
+    form.value.assignees.push({ userCode, fullName });
     newAssignee.value = '';
+  } catch (err: unknown) {
+    const typedError = err as { message?: string };
+    error.value = typedError.message || 'Không thể thêm người dùng';
+    console.error('Lỗi khi thêm người dùng:', err);
   }
 }
 
 function removeAssignee(index: number) {
-  form.value.assigneesUserCodes.splice(index, 1);
+  form.value.assignees.splice(index, 1);
 }
 
 function onFileChange(event: Event) {
@@ -116,10 +140,16 @@ async function submitTask() {
     formData.append('title', form.value.title);
     formData.append('description', form.value.description);
     formData.append('percentDone', String(form.value.percentDone));
-    formData.append(
-      'assigneesUserCode',
-      form.value.assigneesUserCodes.map(code => `"${code}"`).join(', ')
-    );
+    formData.append('taskType', form.value.taskType);
+
+    if (form.value.taskType === 'PRIVATE_TASK' && form.value.assignees.length > 0) {
+      form.value.assignees.forEach(assignee => {
+        formData.append('assigneesUserCode', assignee.userCode);
+      });
+    } else if (form.value.taskType === 'PUBLIC_TASK') {
+      formData.append('assigneesUserCode', form.value.userId);
+    }
+
     if (form.value.file) {
       formData.append('fileOfTask', form.value.file);
     }
@@ -128,9 +158,10 @@ async function submitTask() {
     alert('Tạo công việc mới thành công');
     emit('submitted');
     emit('close');
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const typedError = error as { message?: string };
     console.error('Error submitting task:', error);
-    alert(error.message || 'Lỗi khi tạo task');
+    alert(typedError.message || 'Lỗi khi tạo task');
   }
 }
 </script>
@@ -190,7 +221,8 @@ label {
 input[type="text"],
 input[type="number"],
 input[type="file"],
-textarea {
+textarea,
+select {
   padding: 0.6rem 0.8rem;
   border: 1px solid #ccc;
   border-radius: 6px;
@@ -231,26 +263,46 @@ button[type="submit"]:hover {
 
 .code-list {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: row;
   gap: 0.5rem;
   margin-top: 0.5rem;
 }
 
 .code-item {
-  background: #f1f1f1;
+  background: #e9ecef;
   padding: 0.4rem 0.6rem;
-  border-radius: 5px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-direction: row;
+}
+
+.code-item span {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  font-size: 0.95rem;
+  color: #212529;
 }
 
 .remove-btn {
-  background: none;
+  background: #dc3545;
   border: none;
+  color: white;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
   cursor: pointer;
-  color: red;
-  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: #c82333;
+  }
 }
 
 .readonly-field {
@@ -266,5 +318,24 @@ button[type="submit"]:hover {
   text-align: center;
   font-size: 25px;
   margin: 0 auto;
+}
+
+.add-btn {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover {
+    background: #218838;
+  }
+}
+
+.error-message {
+  color: #dc3545;
+  text-align: center;
+  margin-top: 10px;
 }
 </style>

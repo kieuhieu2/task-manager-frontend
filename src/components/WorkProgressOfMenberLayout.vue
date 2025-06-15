@@ -11,7 +11,7 @@
               <th>Mã người dùng</th>
               <th>Trạng thái</th>
               <th>Tiến độ</th>
-              <th>Thời gian tạo công việc</th>
+              <th>Thời gian chuyển trạng thái</th>
             </tr>
           </thead>
           <tbody>
