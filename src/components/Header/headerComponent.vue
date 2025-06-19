@@ -15,8 +15,7 @@
 
       <div class="notification-container">
         <button class="bell-icon" @click="toggleNotificationDropdown">
-          <span>🔔</span>
-          <!-- No badge needed, since all are read -->
+          <Icon icon="lucide:bell" />
         </button>
         <div v-if="notificationDropdownOpen" class="notification-dropdown">
           <div class="dropdown-header">
@@ -35,7 +34,14 @@
       </div>
 
       <div class="menu-container">
-        <button class="menu-button" @click="toggleMenu">☰</button>
+        <button class="menu-button" @click="toggleMenu">
+          <img
+            :src="userAvatar"
+            alt="User Avatar"
+            class="menu-avatar"
+            @error="handleAvatarError"
+          />
+        </button>
         <ul v-if="menuOpen" class="menu-dropdown">
           <li @click="handleMyInfo">Thông tin cá nhân</li>
           <li v-if="canHandleGroup" @click="createGroup">Tạo nhóm công việc mới</li>
@@ -43,7 +49,7 @@
           <li @click="handleOpenTrash">
             {{ trashVisible ? 'Đóng' : 'Hiện thị' }} công việc spam
           </li>
-          <li v-if="canHandleUser" @click="console.log('Thêm người dùng')">Thêm người dùng</li>
+          <li v-if="canHandleUser" @click="handleUserManagement">Thêm người dùng</li>
           <li @click="console.log('Đổi mật khẩu')">Đổi mật khẩu</li>
           <li @click="logout">Đăng xuất</li>
         </ul>
@@ -75,6 +81,14 @@
     </div>
   </Teleport>
 
+  <Teleport to="body">
+    <div v-if="userManagementVisible" class="modal-overlay">
+      <div class="modal-content">
+        <UserManagerLayout @close="closeUserManagement" />
+      </div>
+    </div>
+  </Teleport>
+
 </template>
 
 <script setup lang="ts">
@@ -82,7 +96,18 @@ import GroupCreate from '@/components/CreateGroupLayout.vue';
 import { useHeaderComponent } from "@/components/Header/useHeaderComponent.ts";
 import { formatTime } from '@/utils/formatTime.ts';
 import TaskCreateLayout from '@/components/TaskCreateLayout.vue';
-import MyInfoLayout from '@/components/MyInfoLayout.vue';
+import MyInfoLayout from '@/components/user/MyInfoLayout.vue';
+import UserManagerLayout from '@/components/user/UserManagerLayout.vue';
+import { computed, ref } from 'vue';
+import { defineEmits } from 'vue';
+import { useUserStore } from "@/stores/userStore.ts";
+import { Icon } from '@iconify/vue'
+
+const userStore = useUserStore();
+const userAvatar = computed(() => {
+  // If there's no avatar in store, use a default one
+  return userStore.getAvatar || 'avatar.jpeg';
+});
 
 const {
   dropdownOpen, groups, selectedGroup, toggleDropdown, selectGroup, menuOpen, toggleMenu,
@@ -98,12 +123,9 @@ const {
   showMyInfo, handleMyInfo, closeMyInfo,
 } = useHeaderComponent();
 
-const role = localStorage.getItem('role')
+const role = localStorage.getItem('role');
 
 //handle trash
-import { computed, ref } from 'vue'
-import { defineEmits } from 'vue';
-
 const emit = defineEmits<{
   (e: 'toggle-trash', value: boolean): void;
 }>();
@@ -128,9 +150,48 @@ const canHandleGroup = computed(() => {
   return role !== 'ROLE_COLLABORATOR' && role !== 'ROLE_STUDENT';
 })
 
+// User manager
+const userManagementVisible = ref(false);
+const handleUserManagement = () => {
+  userManagementVisible.value = true;
+  menuOpen.value = false; // Close the menu
+};
+const closeUserManagement = () => {
+  userManagementVisible.value = false;
+};
+
+// Handle avatar error
+const handleAvatarError = (e: Event) => {
+  // Set a default avatar if the image fails to load
+  const imgElement = e.target as HTMLImageElement;
+  imgElement.src = '/avatar.jpeg';
+};
+
 </script>
 
 <style scoped lang="scss">
 @use 'headerComponent.module.scss';
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 8px;
+  width: auto;
+  height: auto;
+  overflow: hidden;
+  position: relative;
+}
 </style>
 

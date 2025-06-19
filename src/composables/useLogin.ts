@@ -1,13 +1,13 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { post } from "@/api/axiosInstance.js";
 import type { Ref } from "vue";
 import type { AuthenticationResponse, TokenPayload } from "@/types/auth.js";
 import { jwtDecode } from "jwt-decode";
 import axios from 'axios'
 import { useTaskStore } from "@/stores/taskStore.js";
-import { useGetMyGroupsStore } from '@/stores/groupsStore.ts'
 import { useNotificationStore } from '@/stores/notificationStore.ts'
+import { getMyAvatar } from "@/api/userApi.js";
+import { useUserStore } from "@/stores/userStore.ts";
 
 interface LoginForm {
   username: string;
@@ -42,7 +42,6 @@ export function useLogin() {
           password: form.value.password },
       );
 
-      console.log("Đăng nhập thành công:", response.data);
       localStorage.setItem("token", response.data.result.token);
       const payload = jwtDecode<TokenPayload>(response.data.result.token);
       localStorage.setItem("role", payload.scope);
@@ -50,9 +49,10 @@ export function useLogin() {
 
       router.push("/get-my-groups");
 
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorObj = err as { response?: { data?: { message?: string } } };
       error.value =
-        err.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại.";
+        errorObj.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại.";
       console.error("Lỗi đăng nhập:", err);
     } finally {
       isLoading.value = false;
@@ -63,11 +63,13 @@ export function useLogin() {
   const logout = () => {
     const taskStore = useTaskStore();
     const notificationStore = useNotificationStore();
+    const userStore = useUserStore();
     const useGetMyGroupsStore = useNotificationStore();
 
     localStorage.clear();
     taskStore.$reset();
     notificationStore.$reset();
+    userStore.$reset();
     useGetMyGroupsStore.$reset()
     router.push("/login");
   };

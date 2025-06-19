@@ -83,21 +83,6 @@ $notification-badge: #f87171;
   .menu-container {
     position: relative;
 
-    .menu-button {
-      background-color: white;
-      border: 2px solid #e5e7eb;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      font-size: 24px;
-      text-align: center;
-      line-height: 36px;
-      cursor: pointer;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
     .menu-dropdown {
       position: absolute;
       right: 0;
@@ -203,6 +188,31 @@ $notification-badge: #f87171;
         padding: 20px 16px;
         text-align: center;
       }
+    }
+  }
+
+  //avatar menu
+  .menu-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .menu-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s;
+    
+    &:hover {
+      transform: scale(1.05);
     }
   }
 }
