@@ -50,7 +50,7 @@
             {{ trashVisible ? 'Đóng' : 'Hiện thị' }} công việc spam
           </li>
           <li v-if="canHandleUser" @click="handleUserManagement">Thêm người dùng</li>
-          <li @click="console.log('Đổi mật khẩu')">Đổi mật khẩu</li>
+          <li @click="handleChangePassword">Đổi mật khẩu</li>
           <li @click="logout">Đăng xuất</li>
         </ul>
       </div>
@@ -89,6 +89,14 @@
     </div>
   </Teleport>
 
+  <Teleport to="body">
+    <div v-if="changePasswordVisible" class="modal-overlay">
+      <div class="modal-content">
+        <ChangePasswordLayer @close="closeChangePassword" />
+      </div>
+    </div>
+  </Teleport>
+
 </template>
 
 <script setup lang="ts">
@@ -98,6 +106,7 @@ import { formatTime } from '@/utils/formatTime.ts';
 import TaskCreateLayout from '@/components/TaskCreateLayout.vue';
 import MyInfoLayout from '@/components/user/MyInfoLayout.vue';
 import UserManagerLayout from '@/components/user/UserManagerLayout.vue';
+import ChangePasswordLayer from '@/components/user/ChangePasswordLayer.vue';
 import { computed, ref } from 'vue';
 import { defineEmits } from 'vue';
 import { useUserStore } from "@/stores/userStore.ts";
@@ -158,6 +167,16 @@ const handleUserManagement = () => {
 };
 const closeUserManagement = () => {
   userManagementVisible.value = false;
+};
+
+// Change password
+const changePasswordVisible = ref(false);
+const handleChangePassword = () => {
+  changePasswordVisible.value = true;
+  menuOpen.value = false; // Close the menu
+};
+const closeChangePassword = () => {
+  changePasswordVisible.value = false;
 };
 
 // Handle avatar error

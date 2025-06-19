@@ -1,9 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import { permissions } from '@/router/permissions.js';
-import CreateUser from '@/views/createUser.vue';
-import LoginPage from '@/views/loginPage.vue';
-import GetMyGroups from '@/views/getMyGroups.vue';
+import LoginPage from '@/views/LoginPage.vue';
+import GetMyGroups from '@/views/GetMyGroups.vue';
 import TaskManager from '@/views/TaskManager.vue';
 
 const   routes = [
@@ -12,12 +11,6 @@ const   routes = [
       name: 'home',
       component: HomeView,
     },
-  {
-    path: '/create-user',
-    name: 'create-user',
-    component: CreateUser,
-    meta: { requiresAuth: true, allowedRoles: ['admin'] },
-  },
   {
     path: '/login',
     name: 'loginPage',
