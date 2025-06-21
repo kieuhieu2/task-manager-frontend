@@ -62,6 +62,11 @@
         </div>
 
         <div>
+          <label>Deadline:</label>
+          <input type="date" v-model="form.deadline" required />
+        </div>
+
+        <div>
           <label>File đính kèm:</label>
           <input type="file" @change="onFileChange" />
         </div>
@@ -88,6 +93,7 @@ const form = ref({
   taskType: 'PUBLIC_TASK',
   assignees: [] as Array<{ userCode: string; fullName: string }>,
   file: null as File | null,
+  deadline: '',
 });
 
 onMounted(() => {
@@ -152,6 +158,10 @@ async function submitTask() {
 
     if (form.value.file) {
       formData.append('fileOfTask', form.value.file);
+    }
+
+    if (form.value.deadline) {
+      formData.append('deadline', form.value.deadline);
     }
 
     await createTask(formData);
