@@ -6,7 +6,9 @@
       :key="group.groupId"
       class="group-item"
     >
-      <div v-if="editingGroupId === group.groupId">
+      <div 
+        v-if="editingGroupId === group.groupId" 
+        class="group-content">
         <input v-model="editedName" class="edit-input" />
         <textarea v-model="editedDescription" class="edit-textarea"></textarea>
         <div class="action-buttons">
@@ -15,8 +17,10 @@
           <button @click="editingGroupId = null" class="cancel-button">Hủy</button>
         </div>
       </div>
-      <div v-else>
-        <button class="group-button">
+      <div v-else class="group-content">
+        <button 
+          class="group-button" 
+          @click="handleGroupClick(group)">
           {{ group.nameOfGroup }}
         </button>
         <p class="group-description">{{ group.descriptionOfGroup }}</p>
@@ -48,8 +52,10 @@ import { onMounted, ref } from 'vue'
 import { updateGroup, deleteGroup } from '@/api/GroupsApi.js'
 import type { Group } from '@/types/group.js'
 import { useGetMyGroupsStore } from '@/stores/groupsStore.js'
+import { useRouter } from 'vue-router'
 
 const { groups, fetchGroups } = useGetMyGroups();
+const router = useRouter();
 const editingGroupId = ref<number | null>(null);
 const editedName = ref('');
 const editedDescription = ref('');
@@ -116,6 +122,11 @@ const showGroupMembers = (group: Group) => {
 const closeMembersModal = () => {
   showMembersModal.value = false;
 };
+
+const handleGroupClick = (group: Group) => {
+  localStorage.setItem('groupId', String(group.groupId));
+  router.push(`/task-manager/${group.groupId}`);
+};
 </script>
 
 <style scoped lang="scss">
@@ -124,8 +135,14 @@ const closeMembersModal = () => {
   grid-template-columns: repeat(5, 1fr);
   gap: 20px;
   padding: 20px;
-  max-width: 1200px;
+  max-width: 1350px;
   margin: 60px auto;
+}
+
+.group-content {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
 }
 
 .group-item {
@@ -155,6 +172,13 @@ const closeMembersModal = () => {
   font-weight: 500;
   text-align: center;
   transition: background-color 0.2s ease;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.2;
+  min-height: 45px;
 
   &:hover {
     background-color: #0056b3;
@@ -178,8 +202,11 @@ const closeMembersModal = () => {
 .action-buttons {
   margin-top: auto;
   display: flex;
-  gap: 10px;
-  align-self: flex-end;
+  justify-content: center;
+}
+
+.action-buttons button + button {
+  margin-left: 10px;
 }
 
 .edit-button {
@@ -258,5 +285,6 @@ const closeMembersModal = () => {
   border-radius: 5px;
   border: 1px solid #ddd;
   resize: vertical;
+  flex-grow: 1;
 }
 </style>

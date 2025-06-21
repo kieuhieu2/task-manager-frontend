@@ -1,9 +1,12 @@
 <template>
   <div class="header-wrapper">
     <header class="header">
-      <h1 class="header__title">Quản lý công việc</h1>
+      <h1 class="header__title" @click="goToGroups">Quản lý công việc</h1>
 
-      <div class="header__group-selector" @click="toggleDropdown">
+      <div 
+        class="header__group-selector" 
+        @click="toggleDropdown" 
+        @mouseleave="closeDropdown">
         {{ selectedGroup }}
         <span class="arrow-down">▼</span>
         <ul v-if="dropdownOpen" class="dropdown-menu">
@@ -13,46 +16,52 @@
         </ul>
       </div>
 
-      <div class="notification-container">
-        <button class="bell-icon" @click="toggleNotificationDropdown">
-          <Icon icon="lucide:bell" />
-        </button>
-        <div v-if="notificationDropdownOpen" class="notification-dropdown">
-          <div class="dropdown-header">
-            Thông báo
+      <div class="right-side-header">
+        <div class="notification-container">
+          <button class="bell-icon" @click="toggleNotificationDropdown">
+            <Icon icon="lucide:bell" />
+          </button>
+          <div
+            v-if="notificationDropdownOpen"
+            class="notification-dropdown"
+            @mouseleave="closeNotificationDropdown"
+          >
+            <div class="dropdown-header">
+              Thông báo
+            </div>
+            <ul v-if="notifications.length">
+              <li v-for="noti in notifications" :key="noti.notificationId">
+                {{ noti.message }}
+                <div class="noti-time">{{ formatTime(noti.createdAt)}}</div>
+              </li>
+            </ul>
+            <div v-else class="empty">Không có thông báo nào</div>
+            <div v-if="notificationsLoading" class="empty">Đang tải thông báo...</div>
+            <div v-if="notificationsError" class="empty" style="color:red">{{ notificationsError }}</div>
           </div>
-          <ul v-if="notifications.length">
-            <li v-for="noti in notifications" :key="noti.notificationId">
-              {{ noti.message }}
-              <div class="noti-time">{{ formatTime(noti.createdAt)}}</div>
-            </li>
-          </ul>
-          <div v-else class="empty">Không có thông báo nào</div>
-          <div v-if="notificationsLoading" class="empty">Đang tải thông báo...</div>
-          <div v-if="notificationsError" class="empty" style="color:red">{{ notificationsError }}</div>
         </div>
-      </div>
 
-      <div class="menu-container">
-        <button class="menu-button" @click="toggleMenu">
-          <img
-            :src="userAvatar"
-            alt="User Avatar"
-            class="menu-avatar"
-            @error="handleAvatarError"
-          />
-        </button>
-        <ul v-if="menuOpen" class="menu-dropdown">
-          <li @click="handleMyInfo">Thông tin cá nhân</li>
-          <li v-if="canHandleGroup" @click="createGroup">Tạo nhóm công việc mới</li>
-          <li v-if="canCreateTask" @click="openCreateTask">Thêm mới công việc của nhóm</li>
-          <li @click="handleOpenTrash">
-            {{ trashVisible ? 'Đóng' : 'Hiện thị' }} công việc spam
-          </li>
-          <li v-if="canHandleUser" @click="handleUserManagement">Thêm người dùng</li>
-          <li @click="handleChangePassword">Đổi mật khẩu</li>
-          <li @click="logout">Đăng xuất</li>
-        </ul>
+        <div class="menu-container" @mouseleave="closeMenu">
+          <button class="menu-button" @click="toggleMenu">
+            <img
+              :src="userAvatar"
+              alt="User Avatar"
+              class="menu-avatar"
+              @error="handleAvatarError"
+            />
+          </button>
+          <ul v-if="menuOpen" class="menu-dropdown">
+            <li @click="handleMyInfo">Thông tin cá nhân</li>
+            <li v-if="canHandleGroup" @click="createGroup">Tạo nhóm công việc mới</li>
+            <li v-if="canCreateTask" @click="openCreateTask">Thêm mới công việc của nhóm</li>
+            <li @click="handleOpenTrash">
+              {{ trashVisible ? 'Đóng' : 'Hiện thị' }} công việc spam
+            </li>
+            <li v-if="canHandleUser" @click="handleUserManagement">Thêm người dùng</li>
+            <li @click="handleChangePassword">Đổi mật khẩu</li>
+            <li @click="logout">Đăng xuất</li>
+          </ul>
+        </div>
       </div>
     </header>
   </div>
@@ -111,6 +120,7 @@ import { computed, ref } from 'vue';
 import { defineEmits } from 'vue';
 import { useUserStore } from "@/stores/userStore.ts";
 import { Icon } from '@iconify/vue'
+import { useRouter } from 'vue-router';
 
 const userStore = useUserStore();
 const userAvatar = computed(() => {
@@ -119,11 +129,16 @@ const userAvatar = computed(() => {
 });
 
 const {
-  dropdownOpen, groups, selectedGroup, toggleDropdown, selectGroup, menuOpen, toggleMenu,
+  dropdownOpen, groups, selectedGroup, toggleDropdown, closeDropdown, selectGroup, menuOpen, toggleMenu, closeMenu,
   logout, createGroup, showCreateGroup, closeCreateGroup,
 
   // Notifications
-  notifications, notificationsLoading, notificationsError, notificationDropdownOpen, toggleNotificationDropdown,
+  notifications, 
+  notificationsLoading, 
+  notificationsError, 
+  notificationDropdownOpen, 
+  toggleNotificationDropdown, 
+  closeNotificationDropdown,
 
   // Task Creation
   showCreateTask, closeCreateTask, openCreateTask,
@@ -184,6 +199,12 @@ const handleAvatarError = (e: Event) => {
   // Set a default avatar if the image fails to load
   const imgElement = e.target as HTMLImageElement;
   imgElement.src = '/avatar.jpeg';
+};
+
+// Navigate to groups page
+const router = useRouter();
+const goToGroups = () => {
+  router.push('/get-my-groups');
 };
 
 </script>

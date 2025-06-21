@@ -33,6 +33,10 @@ export const useHeaderComponent = () => {
     //  call api to set notification as read
   }
 
+  function closeNotificationDropdown() {
+    notificationDropdownOpen.value = false;
+  }
+
   // end notifications
 
   // State cho dropdown và menu
@@ -69,8 +73,16 @@ export const useHeaderComponent = () => {
     dropdownOpen.value = !dropdownOpen.value;
   };
 
+  const closeDropdown = () => {
+    dropdownOpen.value = false;
+  };
+
   const toggleMenu = () => {
     menuOpen.value = !menuOpen.value;
+  };
+
+  const closeMenu = () => {
+    menuOpen.value = false;
   };
 
   const selectGroup = (group: Group) => {
@@ -122,7 +134,9 @@ export const useHeaderComponent = () => {
     groups,
     selectedGroup,
     toggleDropdown,
+    closeDropdown,
     toggleMenu,
+    closeMenu,
     selectGroup,
     logout,
     createGroup,
@@ -135,6 +149,7 @@ export const useHeaderComponent = () => {
     notificationsError,
     notificationDropdownOpen,
     toggleNotificationDropdown,
+    closeNotificationDropdown,
 
     //task
     openCreateTask,
