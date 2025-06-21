@@ -290,4 +290,5 @@ const emit = defineEmits(['apply-filters', 'clear-filters']);
 .clear-btn:hover {
   background-color: #c82333;
 }
+
 </style>

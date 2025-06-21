@@ -6,6 +6,7 @@
       :key="group.groupId"
       class="group-item"
     >
+
       <div
         v-if="editingGroupId === group.groupId"
         class="group-content">
