@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, type Ref } from "vue";
-import { fetchTasks, updateTaskState, updateTask, deleteTask, getFileOfTask } from '@/api/task.js'
+import { fetchTasks, updateTaskState, updateTask as updateTaskApi, deleteTask as deleteTaskApi, getFileOfTask } from '@/api/task.js'
 import { type Task, TaskState } from '@/types/task.js'
 
 export const useTaskStore = defineStore('taskStore', () => {
@@ -8,17 +8,29 @@ export const useTaskStore = defineStore('taskStore', () => {
   const selectedTaskFile: Ref<{ fileUrl: string; fileType: string } | null> = ref(null);
 
   const loadTasks = async (groupId: number) => {
-    if (!tasksByGroup.value[groupId]) {
-      try {
-        const tasks = (await fetchTasks(groupId)) ?? [];
-        tasksByGroup.value[groupId] = tasks.map(task => ({
-          ...task,
-          fileUrl: task.fileUrl || undefined,
-          fileType: task.fileType ?? null,
-        })) as Task[];
-      } catch (error) {
-        console.error('Error loading tasks:', error);
-      }
+    try {
+      const tasks = (await fetchTasks(groupId)) ?? [];
+      tasksByGroup.value[groupId] = tasks.map(task => ({
+        ...task,
+        fileUrl: task.fileUrl || undefined,
+        fileType: task.fileType ?? null,
+      })) as Task[];
+    } catch (error) {
+      console.error('Error loading tasks:', error);
+    }
+  };
+
+  // Method để refresh tasks sau khi tạo mới
+  const refreshTasks = async (groupId: number) => {
+    try {
+      const tasks = (await fetchTasks(groupId)) ?? [];
+      tasksByGroup.value[groupId] = tasks.map(task => ({
+        ...task,
+        fileUrl: task.fileUrl || undefined,
+        fileType: task.fileType ?? null,
+      })) as Task[];
+    } catch (error) {
+      console.error('Error refreshing tasks:', error);
     }
   };
 
@@ -54,7 +66,7 @@ export const useTaskStore = defineStore('taskStore', () => {
       const taskIndex = tasks.findIndex(t => t.taskId === updatedTask.taskId);
       if (taskIndex !== -1) {
         try {
-          const returnedTask = await updateTask(updatedTask.taskId, updatedTask);
+          const returnedTask = await updateTaskApi(updatedTask);
           // Ensure returnedTask is a valid object and matches the Task type
           if (returnedTask !== undefined && returnedTask !== null && typeof returnedTask === 'object' && !Array.isArray(returnedTask)) {
             const validatedTask = returnedTask as Partial<Task>;
@@ -82,7 +94,7 @@ export const useTaskStore = defineStore('taskStore', () => {
       const taskIndex = tasks.findIndex(t => t.taskId === taskId);
       if (taskIndex !== -1) {
         try {
-          await deleteTask(groupId, taskId);
+          await deleteTaskApi(taskId);
           tasks.splice(taskIndex, 1);
           tasksByGroup.value[groupId] = [...tasks];
         } catch (error) {
@@ -102,7 +114,7 @@ export const useTaskStore = defineStore('taskStore', () => {
       if (fileData) {
         selectedTaskFile.value = {
           fileUrl: fileData.fileUrl,
-          fileType: fileData.fileType || 'unknown', // Ensure fileType is set, defaulting to 'unknown' if missing
+          fileType: fileData.fileType || 'unknown',
         };
       } else {
         selectedTaskFile.value = null;
@@ -130,9 +142,11 @@ export const useTaskStore = defineStore('taskStore', () => {
     }
   };
 
-  return { tasksByGroup,
+  return { 
+    tasksByGroup,
     selectedTaskFile,
     loadTasks,
+    refreshTasks,
     getTasksForGroup,
     updateStateOfTask,
     updateTask,

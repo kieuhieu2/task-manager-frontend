@@ -1,8 +1,8 @@
 $header-height: 60px;
 $horizontal-spacer: 24px;
-$gray-200: #e5e7eb;
+$gray-200: #f8f9fa;
 $gray-800: #1f2937;
-$notification-badge: #f87171;
+$notification-badge: #eff3f0;
 
 .header-wrapper {
   height: $header-height; /* Giữ chỗ cho header */
@@ -15,7 +15,7 @@ $notification-badge: #f87171;
   left: 0;
   right: 0;
   height: $header-height;
-  background-color: $gray-200;
+  background-color: #bff0ca;
   border-radius: 9999px;
   margin-left: $horizontal-spacer;
   margin-right: $horizontal-spacer;
@@ -42,9 +42,9 @@ $notification-badge: #f87171;
     position: relative;
     display: flex;
     align-items: center;
-    background-color: whitesmoke;
-    border: 2px solid #e5e7eb;
-    border-radius: 20px;
+    background-color: #c9eed1;
+    border: 2px solid #83e399;
+    border-radius: 30px;
     padding: 8px 16px;
     cursor: pointer;
     font-size: 16px;
@@ -143,7 +143,7 @@ $notification-badge: #f87171;
         position: absolute;
         top: -4px;
         right: -4px;
-        background: $notification-badge;
+        background: white;
         color: white;
         border-radius: 50%;
         min-width: 18px;
@@ -155,6 +155,25 @@ $notification-badge: #f87171;
         padding: 0 5px;
         font-weight: bold;
         box-shadow: 0 0 0 2px $gray-200;
+      }
+
+      .notification-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background: white; // Màu xanh
+        color: #000; // Chữ đen
+        border-radius: 50%;
+        min-width: 20px;
+        height: 20px;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 6px;
+        font-weight: bold;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        border: 2px solid #fff;
       }
     }
 
@@ -195,6 +214,15 @@ $notification-badge: #f87171;
 
           &.unread {
             font-weight: bold;
+            background-color: whitesmoke; // Màu xanh nhạt cho thông báo chưa đọc
+            border-left: 3px solid #d4e6db; // Viền xanh bên trái
+          }
+
+          .noti-time {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+            font-weight: normal;
           }
         }
       }

@@ -6,8 +6,8 @@
       :key="group.groupId"
       class="group-item"
     >
-      <div 
-        v-if="editingGroupId === group.groupId" 
+      <div
+        v-if="editingGroupId === group.groupId"
         class="group-content">
         <input v-model="editedName" class="edit-input" />
         <textarea v-model="editedDescription" class="edit-textarea"></textarea>
@@ -18,8 +18,8 @@
         </div>
       </div>
       <div v-else class="group-content">
-        <button 
-          class="group-button" 
+        <button
+          class="group-button"
           @click="handleGroupClick(group)">
           {{ group.nameOfGroup }}
         </button>
@@ -162,7 +162,7 @@ const handleGroupClick = (group: Group) => {
 }
 
 .group-button {
-  background-color: #007bff;
+  background-color: #65c77b;
   color: white;
   border: none;
   padding: 10px 15px;

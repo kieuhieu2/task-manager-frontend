@@ -20,6 +20,9 @@
         <div class="notification-container">
           <button class="bell-icon" @click="toggleNotificationDropdown">
             <Icon icon="lucide:bell" />
+            <div v-if="unreadNotificationsCount > 0" class="notification-badge">
+              {{ unreadNotificationsCount }}
+            </div>
           </button>
           <div
             v-if="notificationDropdownOpen"
@@ -30,7 +33,11 @@
               Thông báo
             </div>
             <ul v-if="notifications.length">
-              <li v-for="noti in notifications" :key="noti.notificationId">
+              <li 
+                v-for="noti in notifications" 
+                :key="noti.notificationId"
+                :class="{ 'unread': !noti.wasRead }"
+              >
                 {{ noti.message }}
                 <div class="noti-time">{{ formatTime(noti.createdAt)}}</div>
               </li>
@@ -77,7 +84,7 @@
   <Teleport to="body">
     <div v-if="showCreateTask" class="modal-overlay">
       <div class="modal-content">
-        <TaskCreateLayout @close="closeCreateTask" />
+        <TaskCreateLayout @close="closeCreateTask" @submitted="handleTaskSubmitted" />
       </div>
     </div>
   </Teleport>
@@ -119,10 +126,12 @@ import ChangePasswordLayer from '@/components/user/ChangePasswordLayer.vue';
 import { computed, ref } from 'vue';
 import { defineEmits } from 'vue';
 import { useUserStore } from "@/stores/userStore.ts";
+import { useTaskStore } from "@/stores/taskStore.ts";
 import { Icon } from '@iconify/vue'
 import { useRouter } from 'vue-router';
 
 const userStore = useUserStore();
+const taskStore = useTaskStore();
 const userAvatar = computed(() => {
   // If there's no avatar in store, use a default one
   return userStore.getAvatar || 'avatar.jpeg';
@@ -139,6 +148,7 @@ const {
   notificationDropdownOpen, 
   toggleNotificationDropdown, 
   closeNotificationDropdown,
+  unreadNotificationsCount,
 
   // Task Creation
   showCreateTask, closeCreateTask, openCreateTask,
@@ -205,6 +215,14 @@ const handleAvatarError = (e: Event) => {
 const router = useRouter();
 const goToGroups = () => {
   router.push('/get-my-groups');
+};
+
+// Handle task submission
+const handleTaskSubmitted = async () => {
+  const currentGroupId = localStorage.getItem('groupId');
+  if (currentGroupId) {
+    await taskStore.refreshTasks(Number(currentGroupId));
+  }
 };
 
 </script>

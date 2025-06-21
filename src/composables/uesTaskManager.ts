@@ -24,6 +24,12 @@ export function useTaskManager(groupId: ComputedRef<number | null>) {
     }
   };
 
+  const refreshTasks = async () => {
+    if (groupId.value !== null) {
+      await store.refreshTasks(groupId.value);
+    }
+  };
+
   const tasks = computed(() => {
     if (groupId.value === null) return [];
     return store.getTasksForGroup(groupId.value);
@@ -104,5 +110,6 @@ export function useTaskManager(groupId: ComputedRef<number | null>) {
     isTaskDetailsVisible,
     selectedTask,
     loadTasks,
+    refreshTasks,
   };
 }

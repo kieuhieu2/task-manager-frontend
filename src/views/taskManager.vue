@@ -1,7 +1,21 @@
 <template>
   <HeaderOnly @toggle-trash="toggleTrashColumn" />
-
-  // filter menu
+  <LeftNavbar
+    :is-visible="isNavbarVisible"
+    @showCreateTask="handleShowCreateTask"
+    @showCreateGroup="handleShowCreateGroup"
+    @showSpam="handleShowSpam"
+  />
+  <button @click="toggleNavbar" class="navbar-toggle-button">
+    {{ isNavbarVisible ? '<' : '>' }}
+  </button>
+  
+  <div class="filter-container">
+    <TaskFilter 
+      @apply-filters="handleApplyFilters"
+      @clear-filters="handleClearFilters"
+    />
+  </div>
 
   <div class="task-manager-container">
     <div class="row">
@@ -116,23 +130,67 @@
     @delete-task="deleteTaskHandler"
   />
 
+  <Teleport to="body">
+    <div v-if="showCreateGroup" class="modal-overlay">
+      <div class="modal-content">
+        <CreateGroupLayout @close="showCreateGroup = false" />
+      </div>
+    </div>
+  </Teleport>
+
+  <Teleport to="body">
+    <div v-if="showCreateTask" class="modal-overlay">
+      <div class="modal-content">
+        <TaskCreateLayout @close="showCreateTask = false" @submitted="handleTaskSubmitted" />
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue';
+import { computed, onMounted, watch, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import HeaderOnly from '@/layouts/HeaderOnly/headerOnly.vue';
 import { useTaskManager } from '@/composables/uesTaskManager.js';
 import Draggable from 'vuedraggable';
 import TaskDetails from '@/components/TaskDetails/TaskDetails.vue';
+import LeftNavbar from '@/components/LeftNavbar.vue';
+import CreateGroupLayout from '@/components/CreateGroupLayout.vue';
+import TaskCreateLayout from '@/components/TaskCreateLayout.vue';
 import { TaskState } from '@/types/task';
 import type { Task } from '@/types/task';
 import { updateTask, deleteTask } from '@/api/task.js';
+import { useTaskStore } from "@/stores/taskStore.ts";
+import TaskFilter from '@/components/TaskFilter.vue';
 
 const route = useRoute();
+const taskStore = useTaskStore();
+
+// Left Navbar state and methods
+const isNavbarVisible = ref(false);
+const showCreateTask = ref(false);
+const showCreateGroup = ref(false);
+
+const toggleNavbar = () => {
+  isNavbarVisible.value = !isNavbarVisible.value;
+};
+
+const handleShowCreateTask = () => {
+  showCreateTask.value = true;
+  isNavbarVisible.value = false;
+};
+
+const handleShowCreateGroup = () => {
+  showCreateGroup.value = true;
+  isNavbarVisible.value = false;
+};
+
+const handleShowSpam = () => {
+  isTrashVisible.value = !isTrashVisible.value;
+  isNavbarVisible.value = false;
+};
 
 //trash
-import { ref } from 'vue';
 const isTrashVisible = ref(false);
 
 const toggleTrashColumn = (visible: boolean) => {
@@ -155,6 +213,7 @@ const {
   isTaskDetailsVisible,
   selectedTask,
   loadTasks,
+  refreshTasks,
 } = useTaskManager(groupId);
 
   onMounted(() => {
@@ -179,14 +238,20 @@ const {
       return;
     }
     await updateTask(updatedTask);
-    await loadTasks();
+    await refreshTasks();
   };
 
   const deleteTaskHandler = async () => {
     if (selectedTask.value && groupId.value !== null) {
       await deleteTask(selectedTask.value.taskId);
-      await loadTasks();
+      await refreshTasks();
       closeTaskDetails();
+    }
+  };
+  const handleTaskSubmitted = async () => {
+    const currentGroupId = localStorage.getItem('groupId');
+    if (currentGroupId) {
+      await taskStore.refreshTasks(Number(currentGroupId));
     }
   };
 
@@ -203,19 +268,48 @@ const {
     const timeDiff = deadlineDate.getTime() - now.getTime();
     const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
-    if (daysLeft <= 3) {
+    if (daysLeft <= 1) {
       return '#ffebee'; // Đỏ nhạt nếu deadline còn 3 ngày hoặc ít hơn
-    } else if (daysLeft <= 7) {
+    } else if (daysLeft <= 3) {
       return '#fff3e0'; // Cam nhạt nếu deadline còn 7 ngày hoặc ít hơn
-    } else if (daysLeft <= 14) {
+    } else if (daysLeft <= 7) {
       return '#ffffff'; // Vàng nhạt nếu deadline còn 14 ngày
     } else {
       return '#ffffff'; // Xanh lá nhạt cho các deadline xa hơn
     }
   };
+
+  // Filter handling functions
+  const handleApplyFilters = (filterData: any) => {
+    console.log('TaskManager: Applying filters:', filterData);
+    
+    // TODO: Implement actual filtering logic here
+    // For now, just log the filter data
+    const { timeFilter, deadlineFilter, userFilter, specificUserId } = filterData;
+    
+    // Example of how you might implement filtering:
+    // - timeFilter: 'today', 'this_week', 'this_month', 'overdue'
+    // - deadlineFilter: 'today', 'this_week', 'this_month', 'no_deadline'
+    // - userFilter: 'mine', 'assigned_to_me', 'specific'
+    // - specificUserId: string when userFilter is 'specific'
+    
+    // You can filter the lists (list1, list2, list3, list4) based on these criteria
+    // and update the displayed tasks accordingly
+  };
+
+  const handleClearFilters = () => {
+    console.log('TaskManager: Clearing all filters');
+    
+    // TODO: Reset all lists to their original state
+    // You might want to reload the original tasks here
+    if (groupId.value !== null) {
+      loadTasks();
+    }
+  };
 </script>
 
 <style scoped lang="scss">
+
 .row {
   display: flex;
   justify-content: center;
@@ -250,6 +344,7 @@ h3 {
   margin-bottom: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   cursor: pointer;
+  transition: transform 0.2s;
 }
 
 .list-group-item h5 {
@@ -284,4 +379,54 @@ h3 {
   align-items: center;
 }
 
+.navbar-toggle-button {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1001;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background-color: #82cf88;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: #fff;
+  border-radius: 8px;
+  width: auto;
+  height: auto;
+  overflow: hidden;
+  position: relative;
+}
+
+.task-manager-container {
+  padding-top: 10px; /* Add some space from the filter bar */
+}
+
+.filter-container {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 20px;
+}
 </style>

@@ -18,6 +18,11 @@ export const useHeaderComponent = () => {
     error: notificationsError,
   } = storeToRefs(notificationStore)
 
+  // Tính số lượng thông báo chưa đọc
+  const unreadNotificationsCount = computed(() => {
+    return notifications.value.filter(notification => !notification.wasRead).length;
+  });
+
   function getNotifications() {
     const userCode = localStorage.getItem('userCode') || ""
     notificationStore.fetchNotifications(userCode);
@@ -30,7 +35,13 @@ export const useHeaderComponent = () => {
   const notificationDropdownOpen = ref(false);
   function toggleNotificationDropdown() {
     notificationDropdownOpen.value = !notificationDropdownOpen.value;
-    //  call api to set notification as read
+    // Đánh dấu tất cả thông báo chưa đọc thành đã đọc khi mở dropdown
+    if (notificationDropdownOpen.value) {
+      const unreadNotifications = notifications.value.filter(n => !n.wasRead);
+      unreadNotifications.forEach(notification => {
+        notificationStore.markAsRead(notification.notificationId);
+      });
+    }
   }
 
   function closeNotificationDropdown() {
@@ -150,6 +161,7 @@ export const useHeaderComponent = () => {
     notificationDropdownOpen,
     toggleNotificationDropdown,
     closeNotificationDropdown,
+    unreadNotificationsCount,
 
     //task
     openCreateTask,
