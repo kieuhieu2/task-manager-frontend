@@ -24,9 +24,12 @@
           <span v-if="!isEditing || !task?.isCreator">{{ editedTask.percentDone }}%</span>
           <input v-else type="number" v-model="editedTask.percentDone" />
         </p>
-
+        <div class="deadline-info">
+        <span>Hạn chót: {{ formatDeadline(task.deadline) }}</span>
+      </div>
+<!--
         <p><strong>ID người dùng:</strong> {{ task.userId }}</p>
-        <p><strong>ID của nhóm:</strong> {{ task.groupId }}</p>
+        <p><strong>ID của nhóm:</strong> {{ task.groupId }}</p> -->
         <p><strong>Trạng thái công việc:</strong> {{ task.state }}</p>
 
         <p v-if="task.isCreator" class="progress-link" @click="toggleProgressView">
@@ -102,6 +105,12 @@ interface Comment {
   userCode: string;
 }
 
+const formatDeadline = (deadline?: string): string => {
+  if (!deadline) return 'Không có hạn chót';
+  const date = new Date(deadline);
+  return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+};
+
 const props = defineProps<{
   task: Task | null;
   visible: boolean;
@@ -136,7 +145,7 @@ watch(() => props.task, async (newTask) => {
 const loadComments = async (taskId: number) => {
   try {
     const result = await fetchComments(taskId);
-    comments.value = (result || []) as { commentId: number; commentText: string; userName: string; userCode: string }[];
+    comments.value = result as unknown as Comment[];
   } catch (error) {
     console.error('Không thể tải comment:', error);
   }
@@ -244,14 +253,4 @@ const toggleProgressView = () => {
 
 <style scoped lang="scss">
 @use './TaskDetails.module.scss';
-
-.progress-link {
-  color: #007bff;
-  cursor: pointer;
-  text-decoration: underline;
-
-  &:hover {
-    color: #0056b3;
-  }
-}
 </style>

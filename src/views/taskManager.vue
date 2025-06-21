@@ -1,5 +1,8 @@
 <template>
   <HeaderOnly @toggle-trash="toggleTrashColumn" />
+
+  // filter menu
+
   <div class="task-manager-container">
     <div class="row">
       <div class="col-3" id="todoColumn">
@@ -12,7 +15,11 @@
           itemKey="taskId"
         >
           <template #item="{ element }">
-            <div class="list-group-item" @click="openTaskDetails(groupId, element.taskId)">
+            <div
+              class="list-group-item"
+              @click="groupId !== null && openTaskDetails(groupId, element.taskId)"
+              :style="{ backgroundColor: getTaskBackgroundColor(element.deadline) }"
+            >
               <h5>{{ element.title }}</h5>
               <p>{{ element.description }}</p>
               <div class="task-status-row">
@@ -34,7 +41,11 @@
           itemKey="taskId"
         >
           <template #item="{ element }">
-            <div class="list-group-item" @click="openTaskDetails(groupId, element.taskId)">
+            <div
+              class="list-group-item"
+              @click="groupId !== null && openTaskDetails(groupId, element.taskId)"
+              :style="{ backgroundColor: getTaskBackgroundColor(element.deadline) }"
+            >
               <h5>{{ element.title }}</h5>
               <p>{{ element.description }}</p>
               <div class="task-status-row">
@@ -56,7 +67,7 @@
           itemKey="taskId"
         >
           <template #item="{ element }">
-            <div class="list-group-item" @click="openTaskDetails(groupId, element.taskId)">
+            <div class="list-group-item" @click="groupId !== null && openTaskDetails(groupId, element.taskId)">
               <h5>{{ element.title }}</h5>
               <p>{{ element.description }}</p>
               <div class="task-status-row">
@@ -78,7 +89,11 @@
           itemKey="taskId"
         >
           <template #item="{ element }">
-            <div class="list-group-item" @click="openTaskDetails(groupId, element.taskId)">
+            <div
+              class="list-group-item"
+              @click="groupId !== null && openTaskDetails(groupId, element.taskId)"
+              :style="{ backgroundColor: getTaskBackgroundColor(element.deadline) }"
+            >
               <h5>{{ element.title }}</h5>
               <p>{{ element.description }}</p>
               <div class="task-status-row">
@@ -163,7 +178,7 @@ const {
       console.error('Group ID is null');
       return;
     }
-    await updateTask(updatedTask.taskId, updatedTask);
+    await updateTask(updatedTask);
     await loadTasks();
   };
 
@@ -172,6 +187,30 @@ const {
       await deleteTask(selectedTask.value.taskId);
       await loadTasks();
       closeTaskDetails();
+    }
+  };
+
+  // Hàm để tính toán màu nền dựa trên deadline
+  const getTaskBackgroundColor = (deadline?: string) => {
+    if (!deadline) {
+      return '#ffffff'; // Trắng nếu không có deadline
+    }
+
+    const now = new Date();
+    const deadlineDate = new Date(deadline);
+
+    // Tính số ngày còn lại
+    const timeDiff = deadlineDate.getTime() - now.getTime();
+    const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+    if (daysLeft <= 3) {
+      return '#ffebee'; // Đỏ nhạt nếu deadline còn 3 ngày hoặc ít hơn
+    } else if (daysLeft <= 7) {
+      return '#fff3e0'; // Cam nhạt nếu deadline còn 7 ngày hoặc ít hơn
+    } else if (daysLeft <= 14) {
+      return '#ffffff'; // Vàng nhạt nếu deadline còn 14 ngày
+    } else {
+      return '#ffffff'; // Xanh lá nhạt cho các deadline xa hơn
     }
   };
 </script>

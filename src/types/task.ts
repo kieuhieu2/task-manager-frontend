@@ -9,6 +9,8 @@ export interface Task {
   fileUrl?: string
   fileType?: string
   isCreator?: boolean
+  deadline?: string
+  taskType?: string
 }
 
 export enum TaskState {
