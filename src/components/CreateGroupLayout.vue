@@ -107,7 +107,7 @@ const handleAddLeaderCode = (event: KeyboardEvent) => {
     <div class="modal-content">
       <div class="create-header">
         <h2>Tạo nhóm mới</h2>
-        <button @click="$emit('close')" class="close-btn">×</button>
+        <button @click="$emit('close')" class="close-btn">[x]</button>
       </div>
 
       <form @submit.prevent="createGroupHandler" class="create-form">
@@ -198,27 +198,33 @@ const handleAddLeaderCode = (event: KeyboardEvent) => {
 
 .create-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.create-header h2 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin: 0;
+  text-align: center;
 }
 
 .close-btn {
-  background-color: #dc3545;
-  color: white;
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: none;
   border: none;
-  font-size: 1.5rem;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
+  font-size: 1.25rem;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  color: #666;
+}
 
-  &:hover {
-    background-color: #c82333;
-  }
+.close-btn:hover {
+  color: red;
 }
 
 .create-form {

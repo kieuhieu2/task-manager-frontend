@@ -6,6 +6,12 @@
         <button class="close-btn" @click="$emit('close')">[x]</button>
       </div>
 
+      <div class="avatar-container">
+        <div class="avatar">
+          <img :src="avatarUrl" alt="Avatar" />
+        </div>
+      </div>
+
       <div v-if="loading" class="loading">
         <p>Đang tải thông tin người dùng...</p>
       </div>
@@ -54,7 +60,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { getUserByCode } from '@/api/userApi';
+import { getUserByCode, getMyAvatar } from '@/api/userApi';
 
 interface Role {
   name: string;
@@ -72,6 +78,10 @@ interface User {
   roles: Role[];
 }
 
+interface ErrorWithMessage {
+  message?: string;
+}
+
 const props = defineProps<{
   userCode: string;
 }>();
@@ -79,6 +89,7 @@ const props = defineProps<{
 const user = ref<User | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
+const avatarUrl = ref('/avatar.jpeg');
 
 const getRoleNames = (roles: Role[]): string => {
   return roles.map(role => role.name).join(', ');
@@ -98,11 +109,23 @@ const fetchUserDetails = async () => {
     const result = await getUserByCode(props.userCode);
     if (result) {
       user.value = result;
+
+      // Try to fetch avatar
+      try {
+        const avatarData = await getMyAvatar(result.code);
+        if (avatarData) {
+          avatarUrl.value = avatarData;
+        }
+      } catch (avatarErr) {
+        console.warn('Could not load avatar, using default', avatarErr);
+        // Keep using default avatar
+      }
     } else {
       error.value = 'Không tìm thấy người dùng';
     }
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Không thể lấy thông tin người dùng';
+  } catch (err: unknown) {
+    const error_obj = err as ErrorWithMessage;
+    error.value = error_obj?.message || 'Không thể lấy thông tin người dùng';
   } finally {
     loading.value = false;
   }
@@ -129,7 +152,7 @@ onMounted(() => {
 
 .user-details-layout {
   width: 60vw;
-  height: 60vh;
+  height: 70vh;
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
@@ -142,7 +165,7 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   position: relative;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid #e2e8f0;
 }
@@ -169,13 +192,34 @@ onMounted(() => {
   color: red;
 }
 
+.avatar-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #3498db;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .loading,
 .error,
 .not-found {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: calc(100% - 3.5rem);
+  height: calc(100% - 200px);
 }
 
 .error {

@@ -36,16 +36,22 @@
           <strong>Tiến độ các thành viên thực hiện</strong>
         </p>
 
-        <p v-if="taskStore.selectedTaskFile">
+        <div v-if="taskStore.selectedTaskFile" class="file-attachment">
+          <p>
+            <strong>Tệp đính kèm:</strong>
+            <span>{{ taskStore.selectedTaskFile.fileName || `File.${taskStore.selectedTaskFile.fileType}` }}</span>
+          </p>
+          <button @click="downloadFile" class="file-download-btn">
+            Tải xuống tệp đính kèm
+          </button>
+        </div>
+        <p v-else-if="task.fileUrl">
           <strong>Tệp đính kèm:</strong>
-          <a :href="taskStore.selectedTaskFile.fileUrl" target="_blank" download>
-            Download ({{ taskStore.selectedTaskFile.fileType }})
-          </a>
+          <span>{{ task.fileUrl }}</span>
+          <button @click="reloadFile" class="file-download-btn">
+            Thử tải lại
+          </button>
         </p>
-
-        <button v-if="taskStore.selectedTaskFile" @click="downloadFile" class="file-download-btn">
-          Tệp đính kèm của công việc
-        </button>
       </div>
 
       <div class="comments-section">
@@ -169,12 +175,27 @@ const downloadFile = () => {
   if (file) {
     const link = document.createElement('a');
     link.href = file.fileUrl;
-    link.download = `task_file.${file.fileType}`;
+    link.download = file.fileName || `task_file.${file.fileType}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   } else {
     console.error('No file available for download');
+    alert('Không thể tải tệp đính kèm');
+  }
+};
+
+const reloadFile = async () => {
+  try {
+    await taskStore.fetchFileForTask(props.task?.taskId || 0);
+    if (taskStore.selectedTaskFile) {
+      alert('Đã tải lại tệp đính kèm thành công');
+    } else {
+      alert('Không tìm thấy tệp đính kèm');
+    }
+  } catch (error) {
+    console.error('Error reloading file:', error);
+    alert('Không thể tải lại tệp đính kèm');
   }
 };
 

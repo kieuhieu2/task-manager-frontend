@@ -88,7 +88,7 @@ export const getFileOfTask = async (taskId: number): Promise<{ fileUrl: string; 
     });
 
     // Extract the filename from the Content-Disposition header
-    const contentDisposition = response.headers['Content-Disposition'];
+    const contentDisposition = response.headers['content-disposition'];
     const filenameMatch = contentDisposition && contentDisposition.match(/filename="(.+?)"/);
     const filename = filenameMatch ? filenameMatch[1] : `downloaded_file`; // Correctly extract filename
 

@@ -1,20 +1,59 @@
 <template>
   <div class="modal-overlay">
     <div class="my-info-layout">
-      <button class="close-button" @click="emitClose">[x]</button>
-      <h2>Thông tin người dùng</h2>
+      <div class="header">
+        <h2>Thông tin cá nhân</h2>
+        <button class="close-btn" @click="emit('close')">[x]</button>
+      </div>
 
-      <p v-if="error" class="error">{{ error }}</p>
-      <p v-else-if="!user">Đang tải dữ liệu người dùng...</p>
+      <div class="avatar-container">
+        <div class="avatar">
+          <img :src="avatarUrl" alt="Avatar" />
+        </div>
+      </div>
 
-      <div v-else>
+      <div v-if="loading" class="loading">
+        <p>Đang tải thông tin người dùng...</p>
+      </div>
+
+      <div v-else-if="error" class="error">
+        <p>{{ error }}</p>
+      </div>
+
+      <div v-else-if="user" class="user-details">
         <template v-if="!isEditing">
-          <p><strong>Họ tên:</strong> {{ user.firstName }} {{ user.lastName }}</p>
-          <p><strong>Tên đăng nhập:</strong> {{ user.username }}</p>
-          <p><strong>Ngày sinh:</strong> {{ user.dob }}</p>
-          <p><strong>Vai trò:</strong> {{ user.roles[0]?.name || 'Không có vai trò' }}</p>
+          <table>
+            <tbody>
+              <tr>
+                <td class="label">Tài khoản</td>
+                <td class="value">{{ user.username }}</td>
+              </tr>
+              <tr>
+                <td class="label">Họ</td>
+                <td class="value">{{ user.firstName || '-' }}</td>
+              </tr>
+              <tr>
+                <td class="label">Tên</td>
+                <td class="value">{{ user.lastName || '-' }}</td>
+              </tr>
+              <tr>
+                <td class="label">Mã người dùng</td>
+                <td class="value">{{ user.code || '-' }}</td>
+              </tr>
+              <tr>
+                <td class="label">Ngày sinh</td>
+                <td class="value">{{ user.dob || '-' }}</td>
+              </tr>
+              <tr>
+                <td class="label">Vai trò</td>
+                <td class="value">{{ getRoleNames(user.roles) }}</td>
+              </tr>
+            </tbody>
+          </table>
 
-          <button @click="isEditing = true">Sửa thông tin</button>
+          <div class="actions">
+            <button @click="isEditing = true">Sửa thông tin</button>
+          </div>
         </template>
 
         <template v-else>
@@ -38,23 +77,37 @@
           </form>
         </template>
       </div>
+
+      <div v-else class="not-found">
+        <p>Không tìm thấy thông tin người dùng</p>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { defineEmits } from 'vue'
-import { getMyInfo } from '@/api/userApi.js'
+import { getMyInfo, getMyAvatar } from '@/api/userApi'
 import type { User } from '@/types/user'
+
 const emit = defineEmits(['close'])
-const emitClose = () => emit('close')
 const isEditing = ref(false)
 const user = ref<User | null>(null)
 const form = ref({ firstName: '', lastName: '', dob: '' })
 const error = ref('')
+const loading = ref(true)
+const avatarUrl = ref('/avatar.jpeg')
+
+const getRoleNames = (roles: Array<{ name: string; description: string; permissions: string[] }>): string => {
+  return roles.map(role => role.name).join(', ');
+};
+
+interface ErrorWithMessage {
+  message?: string;
+}
 
 const fetchUserInfo = async () => {
+  loading.value = true
   try {
     const data = await getMyInfo()
     user.value = data
@@ -64,8 +117,24 @@ const fetchUserInfo = async () => {
       dob: data.dob
     }
     error.value = ''
-  } catch (err: any) {
-    error.value = err?.message || 'Không thể tải thông tin người dùng'
+
+    // Try to fetch avatar
+    try {
+      if (data.code) {
+        const avatarData = await getMyAvatar(data.code)
+        if (avatarData) {
+          avatarUrl.value = avatarData
+        }
+      }
+    } catch (avatarErr) {
+      console.warn('Could not load avatar, using default', avatarErr)
+      // Keep using default avatar
+    }
+  } catch (err: unknown) {
+    const error_obj = err as ErrorWithMessage
+    error.value = error_obj?.message || 'Không thể tải thông tin người dùng'
+  } finally {
+    loading.value = false
   }
 }
 
@@ -100,15 +169,16 @@ const submitUpdate = async () => {
 
     isEditing.value = false
     error.value = ''
-  } catch (err: any) {
-    error.value = err?.message || 'Cập nhật thất bại'
+  } catch (err: unknown) {
+    const error_obj = err as ErrorWithMessage
+    error.value = error_obj?.message || 'Cập nhật thất bại'
   }
 }
 
-// 👉 Bạn sẽ viết hàm này ở nơi khác, ví dụ truyền từ cha vào hoặc import từ service
 const handleUpdateUser = async (formData: FormData) => {
   // Placeholder: bạn sẽ định nghĩa sau
   console.warn('handleUpdateUser chưa được định nghĩa.')
+  console.log(formData)
 }
 
 onMounted(fetchUserInfo)
@@ -121,45 +191,129 @@ onMounted(fetchUserInfo)
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5); /* nền mờ */
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999; /* đảm bảo đè lên tất cả */
+  z-index: 10000;
 }
 
 .my-info-layout {
+  width: 60vw;
+  height: 70vh;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  padding: 1.5rem;
   position: relative;
-  background: #fff;
-  padding: 24px;
-  width: 100%;
-  max-width: 500px;
-  border-radius: 10px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-  z-index: 10000;
-  animation: fadeIn 0.2s ease-in-out;
+  overflow-y: auto;
 }
 
-.close-button {
+.header {
+  display: flex;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  text-align: center;
+}
+
+.close-btn {
   position: absolute;
-  top: 10px;
-  right: 12px;
-  background: transparent;
+  top: 0;
+  right: 0;
+  background: none;
   border: none;
-  font-size: 20px;
+  font-size: 1.25rem;
   cursor: pointer;
+  color: #666;
 }
 
-.error {
+.close-btn:hover {
   color: red;
 }
 
-input {
-  display: block;
+.avatar-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #3498db;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.avatar img {
   width: 100%;
-  padding: 6px;
-  margin-bottom: 10px;
-  box-sizing: border-box;
+  height: 100%;
+  object-fit: cover;
+}
+
+.loading,
+.error,
+.not-found {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: calc(100% - 200px);
+}
+
+.error {
+  color: #e53e3e;
+}
+
+.user-details {
+  padding: 0.5rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table tr {
+  border-bottom: 1px solid #edf2f7;
+  transition: background-color 0.2s ease;
+}
+
+table tr:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+table tr:last-child {
+  border-bottom: none;
+}
+
+table td {
+  padding: 0.75rem 0.5rem;
+}
+
+.label {
+  font-weight: 600;
+  width: 40%;
+  color: #4a5568;
+}
+
+.value {
+  width: 60%;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
 }
 
 button {
@@ -171,61 +325,23 @@ button {
   transition: background-color 0.2s ease;
 }
 
-/* Nút Sửa */
-.my-info-layout button:not(.close-button):not([type="submit"]):not([type="button"]) {
+.actions button {
   background-color: #3498db;
   color: white;
+  padding: 8px 20px;
 }
 
-.my-info-layout button:not(.close-button):not([type="submit"]):not([type="button"]):hover {
+.actions button:hover {
   background-color: #2980b9;
 }
 
-/* Nút Lưu */
-.my-info-layout button[type="submit"] {
-  background-color: #2ecc71;
-  color: white;
-}
-
-.my-info-layout button[type="submit"]:hover {
-  background-color: #27ae60;
-}
-
-/* Nút Hủy */
-.my-info-layout button[type="button"] {
-  background-color: #e74c3c;
-  color: white;
-}
-
-.my-info-layout button[type="button"]:hover {
-  background-color: #c0392b;
-}
-
-/* Nút Đóng [x] */
-.close-button {
-  position: absolute;
-  top: 10px;
-  right: 12px;
-  background: transparent;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  color: #888;
-  transition: color 0.2s ease;
-}
-
-.close-button:hover {
-  color: #333;
-}
-
-/* Căn chỉnh từng nhóm label + input */
+/* Form styles */
 form div {
   margin-bottom: 16px;
   padding-bottom: 8px;
   border-bottom: 1px solid #ddd;
 }
 
-/* Label hiển thị rõ ràng */
 form label {
   display: block;
   font-weight: 600;
@@ -233,7 +349,6 @@ form label {
   color: #333;
 }
 
-/* Input có viền và bo góc đẹp hơn */
 form input {
   width: 100%;
   padding: 8px 10px;
@@ -249,6 +364,33 @@ form input:focus {
   outline: none;
 }
 
+/* Buttons in the form */
+.handleSaveBtn {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 16px;
+  border-bottom: none;
+}
+
+.handleSaveBtn button[type="submit"] {
+  background-color: #2ecc71;
+  color: white;
+}
+
+.handleSaveBtn button[type="submit"]:hover {
+  background-color: #27ae60;
+}
+
+.handleSaveBtn button[type="button"] {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.handleSaveBtn button[type="button"]:hover {
+  background-color: #c0392b;
+}
+
 /* Animation */
 @keyframes fadeIn {
   from {
@@ -260,12 +402,4 @@ form input:focus {
     transform: scale(1);
   }
 }
-
-.handleSaveBtn {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 16px;
-}
-
 </style>

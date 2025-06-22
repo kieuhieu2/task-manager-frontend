@@ -2,7 +2,7 @@
   <div class="overlay">
     <div class="form-create-task-container">
       <button class="close-btn" @click="$emit('close')">×</button>
-      <h3 class="create-task-label">Tạo mới Task</h3>
+      <h3 class="create-task-label">Tạo mới công việc của nhóm</h3>
       <form @submit.prevent="submitTask">
         <div hidden="hidden">
           <label>Mã nhóm: </label>

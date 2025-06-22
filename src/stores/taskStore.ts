@@ -5,7 +5,7 @@ import { type Task, TaskState } from '@/types/task.js'
 
 export const useTaskStore = defineStore('taskStore', () => {
   const tasksByGroup = ref<{ [groupId: number]: Task[] }>({});
-  const selectedTaskFile: Ref<{ fileUrl: string; fileType: string } | null> = ref(null);
+  const selectedTaskFile: Ref<{ fileUrl: string; fileType: string; fileName?: string } | null> = ref(null);
 
   const loadTasks = async (groupId: number) => {
     try {
@@ -107,20 +107,22 @@ export const useTaskStore = defineStore('taskStore', () => {
   // Fix the type issue for selectedTaskFile
   const fetchFileForTask = async (taskId: number) => {
     try {
-      const fileData = await getFileOfTask(taskId) as { fileUrl: string; fileType?: string } | void;
+      const fileData = await getFileOfTask(taskId) as { fileUrl: string; fileType?: string; fileName?: string } | void;
       if (!fileData) {
-        throw new Error('Failed to fetch file data for task');
-      }
-      if (fileData) {
-        selectedTaskFile.value = {
-          fileUrl: fileData.fileUrl,
-          fileType: fileData.fileType || 'unknown',
-        };
-      } else {
+        console.log('No file data received');
         selectedTaskFile.value = null;
+        return;
       }
+
+      selectedTaskFile.value = {
+        fileUrl: fileData.fileUrl,
+        fileType: fileData.fileType || 'unknown',
+        fileName: fileData.fileName
+      };
+      console.log('File fetched successfully:', selectedTaskFile.value);
     } catch (error) {
       console.error('Error fetching file for task:', error);
+      selectedTaskFile.value = null;
     }
   };
 
@@ -142,7 +144,7 @@ export const useTaskStore = defineStore('taskStore', () => {
     }
   };
 
-  return { 
+  return {
     tasksByGroup,
     selectedTaskFile,
     loadTasks,

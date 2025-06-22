@@ -136,16 +136,21 @@ export async function deleteUser(userCode: string): Promise<UserResponse> {
 
 export async function getMyAvatar(userCode: string): Promise<string> {
   try {
+    // This is a temporary implementation that will be replaced later
+    // Just returning a placeholder URL for now
+    // In a real implementation, this would make an API call to fetch the user's avatar
+    return '/avatar.jpeg';
 
-    //call to mcok data /users/my-avatar
-    const res = await axiosInstance.get(`/users/my-avatar`, {
+    // When implementing the actual API call, it would look like this:
+    /*
+    const res = await axiosInstance.get(`/users/${userCode}/avatar`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`,
       },
     });
 
-    return res.data.result.avatar;
-
+    return res.data.result.avatarUrl;
+    */
   } catch (error: unknown) {
     const err = error as { response?: { data?: { message?: string } } };
     throw new Error(err.response?.data?.message || 'Không thể lấy ảnh đại diện người dùng');
