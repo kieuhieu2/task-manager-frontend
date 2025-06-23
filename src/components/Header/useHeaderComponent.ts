@@ -4,10 +4,13 @@ import { useGetMyGroupsStore } from '@/stores/groupsStore.js';
 import type { Group } from '@/types/group.js';
 import { useNotificationStore } from '@/stores/notificationStore.js'
 import { storeToRefs } from 'pinia'
+import { getMyAvatar } from '@/api/userApi.js'
+import { useUserStore } from '@/stores/userStore.js'
 
 export const useHeaderComponent = () => {
   const router = useRouter();
   const store = useGetMyGroupsStore();
+  const userStore = useUserStore();
   const showCreateGroup = ref(false);
 
   // Begin notification
@@ -28,8 +31,22 @@ export const useHeaderComponent = () => {
     notificationStore.fetchNotifications(userCode);
   }
 
+  // Function to fetch user avatar
+  async function fetchAvatar() {
+    const userCode = localStorage.getItem('userCode');
+    if (userCode) {
+      try {
+        const avatarUrl = await getMyAvatar(userCode);
+        userStore.setAvatar(avatarUrl);
+      } catch (error) {
+        console.error('Error fetching avatar:', error);
+      }
+    }
+  }
+
   onMounted(() => {
-    getNotifications()
+    getNotifications();
+    fetchAvatar();
   });
 
   const notificationDropdownOpen = ref(false);
@@ -172,5 +189,8 @@ export const useHeaderComponent = () => {
     showMyInfo,
     handleMyInfo,
     closeMyInfo,
+
+    // Avatar
+    fetchAvatar,
   };
 };

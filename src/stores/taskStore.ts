@@ -104,7 +104,6 @@ export const useTaskStore = defineStore('taskStore', () => {
     }
   };
 
-  // Fix the type issue for selectedTaskFile
   const fetchFileForTask = async (taskId: number) => {
     try {
       const fileData = await getFileOfTask(taskId) as { fileUrl: string; fileType?: string; fileName?: string } | void;

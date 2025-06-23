@@ -10,5 +10,6 @@ export interface User {
   firstName: string;
   lastName: string;
   dob: string;
+  code: string;
   roles: Role[];
 }

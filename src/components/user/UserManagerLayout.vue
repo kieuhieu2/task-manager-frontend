@@ -179,7 +179,7 @@ const handleDeleteUser = async (userCode: string) => {
     await deleteUser(userCode);
     alert('Xóa người dùng thành công!');
     // Cập nhật lại danh sách người dùng
-    fetchUsers();
+    await fetchUsers();
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : 'Có lỗi xảy ra khi xóa người dùng';
     alert(`Xóa người dùng thất bại: ${errorMessage}`);

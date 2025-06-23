@@ -4,6 +4,7 @@ import type { Notification } from '@/types/notification.js'
 export async function getMyNotifications(userCode: string): Promise<Notification[]> {
   try {
     const res = await get<{ result: Notification[] }>(`/notification/${userCode}`, {})
+    console.log(res.result)
     return res.result
   } catch (error: unknown) {
     if (error instanceof Error && 'response' in error) {

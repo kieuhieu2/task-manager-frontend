@@ -7,8 +7,22 @@
       </div>
 
       <div class="avatar-container">
-        <div class="avatar">
+        <div class="avatar" @click="handleAvatarClick">
           <img :src="avatarUrl" alt="Avatar" />
+          <div v-if="showAvatarUpload" class="avatar-upload-overlay">
+            <label for="avatar-upload" class="upload-button" @click="triggerFileInput">Đổi ảnh</label>
+            <input
+              type="file"
+              id="avatar-upload"
+              ref="fileInput"
+              accept="image/*"
+              @change="handleAvatarChange"
+              style="display: none"
+            />
+          </div>
+        </div>
+        <div v-if="isUploading" class="upload-status">
+          Đang tải ảnh lên...
         </div>
       </div>
 
@@ -87,8 +101,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { getMyInfo, getMyAvatar } from '@/api/userApi'
+import { getMyInfo, getMyAvatar, updateUserAvatar } from '@/api/userApi'
 import type { User } from '@/types/user'
+import { updateMyInfo } from '@/api/userApi'
 
 const emit = defineEmits(['close'])
 const isEditing = ref(false)
@@ -97,6 +112,10 @@ const form = ref({ firstName: '', lastName: '', dob: '' })
 const error = ref('')
 const loading = ref(true)
 const avatarUrl = ref('/avatar.jpeg')
+const showAvatarUpload = ref(false)
+const selectedAvatar = ref<File | null>(null)
+const fileInput = ref<HTMLInputElement | null>(null)
+const isUploading = ref(false)
 
 const getRoleNames = (roles: Array<{ name: string; description: string; permissions: string[] }>): string => {
   return roles.map(role => role.name).join(', ');
@@ -156,8 +175,7 @@ const submitUpdate = async () => {
     formData.append('lastName', form.value.lastName)
     formData.append('dob', form.value.dob)
 
-    // Gọi hàm xử lý cập nhật (do bạn sẽ định nghĩa sau)
-    await handleUpdateUser(formData)
+    await updateMyInfo(formData)
 
     // Cập nhật lại user để hiển thị mới
     user.value = {
@@ -175,10 +193,49 @@ const submitUpdate = async () => {
   }
 }
 
-const handleUpdateUser = async (formData: FormData) => {
-  // Placeholder: bạn sẽ định nghĩa sau
-  console.warn('handleUpdateUser chưa được định nghĩa.')
-  console.log(formData)
+const handleAvatarClick = () => {
+  showAvatarUpload.value = !showAvatarUpload.value
+}
+
+const triggerFileInput = (event: Event) => {
+  event.preventDefault()
+  event.stopPropagation()
+  if (fileInput.value) {
+    fileInput.value.click()
+  }
+}
+
+const handleAvatarChange = async (event: Event) => {
+  const target = event.target as HTMLInputElement
+  if (target.files && target.files.length > 0) {
+    selectedAvatar.value = target.files[0]
+    // Preview the selected image
+    avatarUrl.value = URL.createObjectURL(target.files[0])
+
+    // Auto upload
+    await uploadAvatar()
+  }
+}
+
+const uploadAvatar = async () => {
+  if (!selectedAvatar.value || !user.value?.code) return
+
+  isUploading.value = true
+  try {
+    await updateUserAvatar(user.value.code, selectedAvatar.value)
+    // Refresh avatar after successful upload
+    if (user.value.code) {
+      const newAvatarUrl = await getMyAvatar(user.value.code)
+      avatarUrl.value = newAvatarUrl
+    }
+    showAvatarUpload.value = false
+    selectedAvatar.value = null
+  } catch (err: unknown) {
+    const error_obj = err as ErrorWithMessage
+    error.value = error_obj?.message || 'Không thể cập nhật ảnh đại diện'
+  } finally {
+    isUploading.value = false
+  }
 }
 
 onMounted(fetchUserInfo)
@@ -253,12 +310,45 @@ onMounted(fetchUserInfo)
   overflow: hidden;
   border: 3px solid #3498db;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  position: relative;
+  cursor: pointer;
 }
 
 .avatar img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.avatar-upload-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+  border-radius: 50%;
+}
+
+.avatar:hover .avatar-upload-overlay {
+  opacity: 1;
+}
+
+.upload-button {
+  background-color: #3498db;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 4px 0;
+  font-size: 12px;
+  border: none;
 }
 
 .loading,
@@ -401,5 +491,12 @@ form input:focus {
     opacity: 1;
     transform: scale(1);
   }
+}
+
+.upload-status {
+  margin-top: 10px;
+  text-align: center;
+  color: #3498db;
+  font-size: 14px;
 }
 </style>

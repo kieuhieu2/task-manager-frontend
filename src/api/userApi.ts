@@ -1,4 +1,4 @@
-import axiosInstance from './axiosInstance.js';
+import axiosInstance from './axiosInstance.js'
 import type { User } from '@/types/user.js'
 
 interface UserResponse {
@@ -136,24 +136,35 @@ export async function deleteUser(userCode: string): Promise<UserResponse> {
 
 export async function getMyAvatar(userCode: string): Promise<string> {
   try {
-    // This is a temporary implementation that will be replaced later
-    // Just returning a placeholder URL for now
-    // In a real implementation, this would make an API call to fetch the user's avatar
-    return '/avatar.jpeg';
-
-    // When implementing the actual API call, it would look like this:
-    /*
     const res = await axiosInstance.get(`/users/${userCode}/avatar`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`,
       },
+      responseType: 'blob'
     });
 
-    return res.data.result.avatarUrl;
-    */
+    return URL.createObjectURL(res.data);
   } catch (error: unknown) {
     const err = error as { response?: { data?: { message?: string } } };
+    console.error('Error fetching avatar:', error);
     throw new Error(err.response?.data?.message || 'Không thể lấy ảnh đại diện người dùng');
+  }
+}
+
+export async function updateUserAvatar(userCode: string, avatarFile: File): Promise<void> {
+  try {
+    const formData = new FormData();
+    formData.append('avatar', avatarFile);
+
+    await axiosInstance.post(`/users/${userCode}/avatar`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(err.response?.data?.message || 'Không thể cập nhật ảnh đại diện người dùng');
   }
 }
 

@@ -3,9 +3,9 @@
     <header class="header">
       <h1 class="header__title" @click="goToGroups">Quản lý công việc</h1>
 
-      <div 
-        class="header__group-selector" 
-        @click="toggleDropdown" 
+      <div
+        class="header__group-selector"
+        @click="toggleDropdown"
         @mouseleave="closeDropdown">
         {{ selectedGroup }}
         <span class="arrow-down">▼</span>
@@ -33,8 +33,8 @@
               Thông báo
             </div>
             <ul v-if="notifications.length">
-              <li 
-                v-for="noti in notifications" 
+              <li
+                v-for="noti in notifications"
                 :key="noti.notificationId"
                 :class="{ 'unread': !noti.wasRead }"
               >
@@ -92,7 +92,7 @@
   <Teleport to="body">
     <div v-if="showMyInfo" class="modal-overlay">
       <div class="modal-content">
-        <MyInfoLayout @close="closeMyInfo" />
+        <MyInfoLayout @close="handleMyInfoClose" />
       </div>
     </div>
   </Teleport>
@@ -142,11 +142,11 @@ const {
   logout, createGroup, showCreateGroup, closeCreateGroup,
 
   // Notifications
-  notifications, 
-  notificationsLoading, 
-  notificationsError, 
-  notificationDropdownOpen, 
-  toggleNotificationDropdown, 
+  notifications,
+  notificationsLoading,
+  notificationsError,
+  notificationDropdownOpen,
+  toggleNotificationDropdown,
   closeNotificationDropdown,
   unreadNotificationsCount,
 
@@ -155,6 +155,9 @@ const {
 
   // My Info
   showMyInfo, handleMyInfo, closeMyInfo,
+
+  // Avatar
+  fetchAvatar,
 } = useHeaderComponent();
 
 const role = localStorage.getItem('role');
@@ -223,6 +226,12 @@ const handleTaskSubmitted = async () => {
   if (currentGroupId) {
     await taskStore.refreshTasks(Number(currentGroupId));
   }
+};
+
+// Handle my info close
+const handleMyInfoClose = () => {
+  closeMyInfo();
+  fetchAvatar(); // Refresh avatar after closing the info panel
 };
 
 </script>
