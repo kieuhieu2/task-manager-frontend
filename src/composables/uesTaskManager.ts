@@ -27,10 +27,15 @@ export function useTaskManager(groupId: ComputedRef<number | null>) {
   const refreshTasks = async () => {
     if (groupId.value !== null) {
       await store.refreshTasks(groupId.value);
+      store.applyAllFilters();
     }
   };
 
   const tasks = computed(() => {
+    if (store.tasksWasFiltered && store.tasksWasFiltered.length > 0) {
+      return store.tasksWasFiltered;
+    }
+
     if (groupId.value === null) return [];
     return store.getTasksForGroup(groupId.value);
   });
@@ -41,11 +46,18 @@ export function useTaskManager(groupId: ComputedRef<number | null>) {
   const list4 = computed(() => tasks.value.filter((task) => task.state === TaskState.SPAM));
 
   const openTaskDetails = (groupId: number, taskId: number) => {
-    console.log('Opening task with taskId:', taskId, 'groupId:', groupId);
-    const tasks = store.getTasksForGroup(groupId);
-    const task = tasks.find(t => t.taskId === taskId);
+    let task: Task | undefined;
+
+    if (store.tasksWasFiltered && store.tasksWasFiltered.length > 0) {
+      task = store.tasksWasFiltered.find(t => t.taskId === taskId);
+    }
+
+    if (!task) {
+      const groupTasks = store.getTasksForGroup(groupId);
+      task = groupTasks.find(t => t.taskId === taskId);
+    }
+
     if (task) {
-      console.log('Task found:', task);
       selectedTask.value = { ...task };
       isTaskDetailsVisible.value = true;
     } else {
@@ -76,11 +88,11 @@ export function useTaskManager(groupId: ComputedRef<number | null>) {
     } else if (event.moved) {
       task = event.moved.element;
       console.log("Moved within state:", newState, task);
-      return; // Thoát sớm nếu chỉ di chuyển trong cùng cột
+      return;
     } else if (event.removed) {
       task = event.removed.element;
       console.warn("Task đã bị xóa khỏi danh sách:", task, "From:", fromId);
-      return; // Thoát sớm nếu chỉ xóa
+      return;
     }
 
     if (!task || !newState || groupId.value === null) {
@@ -93,7 +105,10 @@ export function useTaskManager(groupId: ComputedRef<number | null>) {
     try {
       await updateTaskState(task.taskId, newState);
       await store.updateStateOfTask(groupId.value, updatedTask);
-      // Không cần reload tasks vì store đã reactive
+
+      if (store.tasksWasFiltered && store.tasksWasFiltered.length > 0) {
+        store.applyAllFilters();
+      }
     } catch (error) {
       console.error("Lỗi khi cập nhật trạng thái:", error);
     }

@@ -9,9 +9,9 @@
   <button @click="toggleNavbar" class="navbar-toggle-button">
     {{ isNavbarVisible ? '<' : '>' }}
   </button>
-  
+
   <div class="filter-container">
-    <TaskFilter 
+    <TaskFilter
       @apply-filters="handleApplyFilters"
       @clear-filters="handleClearFilters"
     />
@@ -40,6 +40,9 @@
                 <p>{{ element.percentDone }}%</p>
                 <p v-if="element.isCreator" style="color: red;">Bạn là người giao công việc này</p>
               </div>
+              <div class="task-deadline" v-if="element.deadline">
+                <p class="deadline-text">Đến hạn: {{ formatDeadline(element.deadline) }}</p>
+              </div>
             </div>
           </template>
         </Draggable>
@@ -66,6 +69,9 @@
                 <p>{{ element.percentDone }}%</p>
                 <p v-if="element.isCreator" style="color: red;">Bạn là người giao công việc này</p>
               </div>
+              <div class="task-deadline" v-if="element.deadline">
+                <p class="deadline-text">Hạn: {{ formatDeadline(element.deadline) }}</p>
+              </div>
             </div>
           </template>
         </Draggable>
@@ -87,6 +93,9 @@
               <div class="task-status-row">
                 <p>{{ element.percentDone }}%</p>
                 <p v-if="element.isCreator" style="color: red;">Bạn là người giao công việc này</p>
+              </div>
+              <div class="task-deadline" v-if="element.deadline">
+                <p class="deadline-text">Đến hạn: {{ formatDeadline(element.deadline) }}</p>
               </div>
             </div>
           </template>
@@ -113,6 +122,9 @@
               <div class="task-status-row">
                 <p>{{ element.percentDone }}%</p>
                 <p v-if="element.isCreator" style="color: red;">Bạn là người giao công việc này</p>
+              </div>
+              <div class="task-deadline" v-if="element.deadline">
+                <p class="deadline-text">Đến hạn: {{ formatDeadline(element.deadline) }}</p>
               </div>
             </div>
           </template>
@@ -279,31 +291,78 @@ const {
     }
   };
 
+  // Định dạng ngày deadline để hiển thị
+  const formatDeadline = (deadline: string) => {
+    try {
+      const date = new Date(deadline);
+      const options: Intl.DateTimeFormatOptions = {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      };
+      return date.toLocaleDateString('vi-VN', options);
+    } catch (error) {
+      console.error('Error formatting deadline:', error);
+      return deadline;
+    }
+  };
+
   // Filter handling functions
-  const handleApplyFilters = (filterData: any) => {
+  interface FilterData {
+    hasDateRange: boolean;
+    fromDate: string;
+    toDate: string;
+    hasDeadline: boolean;
+    deadlineDate: string;
+    currentGroupOnly: boolean;
+  }
+
+  const handleApplyFilters = (filterData: FilterData) => {
     console.log('TaskManager: Applying filters:', filterData);
-    
-    // TODO: Implement actual filtering logic here
-    // For now, just log the filter data
-    const { timeFilter, deadlineFilter, userFilter, specificUserId } = filterData;
-    
-    // Example of how you might implement filtering:
-    // - timeFilter: 'today', 'this_week', 'this_month', 'overdue'
-    // - deadlineFilter: 'today', 'this_week', 'this_month', 'no_deadline'
-    // - userFilter: 'mine', 'assigned_to_me', 'specific'
-    // - specificUserId: string when userFilter is 'specific'
-    
-    // You can filter the lists (list1, list2, list3, list4) based on these criteria
-    // and update the displayed tasks accordingly
+
+    // Cập nhật tasksWasFiltered sau khi áp dụng các bộ lọc
+    updateTaskListsFromStore();
   };
 
   const handleClearFilters = () => {
     console.log('TaskManager: Clearing all filters');
-    
-    // TODO: Reset all lists to their original state
-    // You might want to reload the original tasks here
-    if (groupId.value !== null) {
-      loadTasks();
+
+    // Xóa tất cả các bộ lọc trong store
+    taskStore.clearAllFilters();
+
+    // Cập nhật lại danh sách task hiển thị
+    updateTaskListsFromStore();
+  };
+
+  // Cập nhật danh sách task từ store
+  const updateTaskListsFromStore = () => {
+    // Sử dụng mảng tasksWasFiltered từ store sau khi đã được lọc
+    if (taskStore.tasksWasFiltered && taskStore.tasksWasFiltered.length > 0) {
+      console.log('Updating task lists from tasksWasFiltered', taskStore.tasksWasFiltered.length);
+
+      // Tạo danh sách theo trạng thái
+      const todoTasks = taskStore.tasksWasFiltered.filter(task => task.state === TaskState.TODO);
+      const inProgressTasks = taskStore.tasksWasFiltered.filter(task => task.state === TaskState.IN_PROGRESS);
+      const doneTasks = taskStore.tasksWasFiltered.filter(task => task.state === TaskState.DONE);
+      const spamTasks = taskStore.tasksWasFiltered.filter(task => task.state === TaskState.SPAM);
+
+      // Cập nhật danh sách task hiển thị
+      list1.value.splice(0, list1.value.length, ...todoTasks);
+      list2.value.splice(0, list2.value.length, ...inProgressTasks);
+      list3.value.splice(0, list3.value.length, ...doneTasks);
+      list4.value.splice(0, list4.value.length, ...spamTasks);
+    } else if (groupId.value !== null) {
+      // Nếu không có task nào được lọc, hiển thị tất cả task của group hiện tại
+      const allTasksInGroup = taskStore.getTasksForGroup(groupId.value);
+      const todoTasks = allTasksInGroup.filter(task => task.state === TaskState.TODO);
+      const inProgressTasks = allTasksInGroup.filter(task => task.state === TaskState.IN_PROGRESS);
+      const doneTasks = allTasksInGroup.filter(task => task.state === TaskState.DONE);
+      const spamTasks = allTasksInGroup.filter(task => task.state === TaskState.SPAM);
+
+      list1.value.splice(0, list1.value.length, ...todoTasks);
+      list2.value.splice(0, list2.value.length, ...inProgressTasks);
+      list3.value.splice(0, list3.value.length, ...doneTasks);
+      list4.value.splice(0, list4.value.length, ...spamTasks);
     }
   };
 </script>
@@ -377,6 +436,14 @@ h3 {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.deadline-text {
+  font-size: 5px;
+  color: #666;
+  text-align: left;
+  margin: 0;
+  font-style: italic;
 }
 
 .navbar-toggle-button {

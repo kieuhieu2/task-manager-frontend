@@ -9,56 +9,54 @@
 
     <div v-if="isFilterVisible" class="filter-popover">
       <div class="filter-content">
-        <!-- Time Filter -->
+        <!-- Date Range Filter -->
         <div class="filter-group">
-          <label><Icon icon="mdi:calendar-clock" /> Thời gian</label>
-          <div class="options">
-            <button
-              v-for="timeFilter in timeFilters"
-              :key="timeFilter.value"
-              :class="{ active: selectedTimeFilter === timeFilter.value }"
-              @click="selectTimeFilter(timeFilter.value)"
-            >
-              {{ timeFilter.label }}
-            </button>
+          <label><Icon icon="mdi:calendar-clock" />Khoảng thời gian</label>
+          <div class="date-range-inputs">
+            <div class="date-input-container">
+              <label for="fromDate">Từ:</label>
+              <input
+                type="date"
+                id="fromDate"
+                v-model="fromDate"
+                class="date-input"
+              />
+            </div>
+            <div class="date-input-container">
+              <label for="toDate">Đến:</label>
+              <input
+                type="date"
+                id="toDate"
+                v-model="toDate"
+                class="date-input"
+              />
+            </div>
           </div>
         </div>
 
         <!-- Deadline Filter -->
         <div class="filter-group">
-          <label><Icon icon="mdi:calendar" /> Ngày đến hạn</label>
-          <div class="options">
-            <button
-              v-for="deadlineFilter in deadlineFilters"
-              :key="deadlineFilter.value"
-              :class="{ active: selectedDeadlineFilter === deadlineFilter.value }"
-              @click="selectDeadlineFilter(deadlineFilter.value)"
-            >
-              {{ deadlineFilter.label }}
-            </button>
+          <label class="deadline-label"><Icon icon="mdi:calendar" /> Ngày đến hạn</label>
+          <div class="date-input-wrapper">
+            <input
+              type="date"
+              id="deadlineDate"
+              v-model="deadlineDate"
+              class="date-input"
+            />
           </div>
         </div>
 
-        <!-- User Filter -->
+        <!-- Current Group Only Filter -->
         <div class="filter-group">
-          <label><Icon icon="mdi:account" /> Người dùng</label>
-          <div class="options">
-            <button
-              v-for="userFilter in userFilters"
-              :key="userFilter.value"
-              :class="{ active: selectedUserFilter === userFilter.value }"
-              @click="selectUserFilter(userFilter.value)"
-            >
-              {{ userFilter.label }}
-            </button>
+          <div class="checkbox-option">
             <input
-              v-if="selectedUserFilter === 'specific'"
-              v-model="specificUserId"
-              type="text"
-              placeholder="Nhập mã"
-              class="user-input"
-              @input="onUserInputChange"
+              type="checkbox"
+              id="currentGroupOnly"
+              v-model="currentGroupOnly"
+              class="filter-checkbox"
             />
+            <label for="currentGroupOnly"><Icon icon="mdi:account-group" /> Chỉ trong nhóm hiện tại</label>
           </div>
         </div>
       </div>
@@ -75,84 +73,131 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import { Icon } from '@iconify/vue';
+import { fetchTasksByDateRange } from '@/api/task';
+import { useTaskStore } from '../stores/taskStore';
 
 // State
 const isFilterVisible = ref(false);
-const selectedTimeFilter = ref('all');
-const selectedDeadlineFilter = ref('all');
-const selectedUserFilter = ref('all');
-const specificUserId = ref('');
+const fromDate = ref('');
+const toDate = ref('');
+const deadlineDate = ref('');
+const currentGroupOnly = ref(true);
+const taskStore = useTaskStore();
+const isLoading = ref(false);
+
+// Đồng bộ các giá trị từ store khi component được tạo
+onMounted(() => {
+  // Đồng bộ các giá trị từ currentFilters của store
+  if (taskStore.currentFilters) {
+    // Date range
+    fromDate.value = taskStore.currentFilters.dateRange.fromDate;
+    toDate.value = taskStore.currentFilters.dateRange.toDate;
+
+    // Deadline
+    deadlineDate.value = taskStore.currentFilters.deadline.date;
+
+    // Current group only
+    currentGroupOnly.value = taskStore.currentFilters.currentGroupOnly;
+  }
+});
 
 const toggleFilter = () => {
   isFilterVisible.value = !isFilterVisible.value;
 };
 
-// Filter options
-const timeFilters = reactive([
-  { label: 'Tất cả', value: 'all' },
-  { label: 'Hôm nay', value: 'today' },
-  { label: 'Tuần này', value: 'this_week' },
-  { label: 'Tháng này', value: 'this_month' },
-  { label: 'Quá hạn', value: 'overdue' }
-]);
+// Watch for changes in date range and automatically fetch tasks
+watch([fromDate, toDate], async ([newFromDate, newToDate]) => {
+  if (newFromDate && newToDate) {
+    taskStore.currentFilters.dateRange.fromDate = newFromDate;
+    taskStore.currentFilters.dateRange.toDate = newToDate;
+    await fetchTasksByDateRangeHandler(newFromDate, newToDate);
+  }
+});
 
-const deadlineFilters = reactive([
-  { label: 'Tất cả', value: 'all' },
-  { label: 'Hôm nay', value: 'today' },
-  { label: 'Tuần này', value: 'this_week' },
-  { label: 'Tháng này', value: 'this_month' },
-  { label: 'Không có deadline', value: 'no_deadline' }
-]);
+// Fetch tasks by date range
+const fetchTasksByDateRangeHandler = async (from: string, to: string) => {
+  try {
+    isLoading.value = true;
+    const userCode = localStorage.getItem('userCode') || '';
 
-const userFilters = reactive([
-  { label: 'Tất cả', value: 'all' },
-  { label: 'Của tôi', value: 'mine' },
-  { label: 'Được giao', value: 'assigned_to_me' },
-  { label: 'Cụ thể', value: 'specific' }
-]);
+    if (!userCode) {
+      console.error('User code not found in localStorage');
+      return;
+    }
 
-// Methods
-const selectTimeFilter = (value: string) => {
-  selectedTimeFilter.value = value;
-};
+    const tasks = await fetchTasksByDateRange(userCode, from, to);
 
-const selectDeadlineFilter = (value: string) => {
-  selectedDeadlineFilter.value = value;
-};
-
-const selectUserFilter = (value: string) => {
-  selectedUserFilter.value = value;
-  if (value !== 'specific') {
-    specificUserId.value = '';
+    if (tasks) {
+      // Add the tasks to the store with a flag to mark them as date range filtered
+      taskStore.addDateRangeFilteredTasks(tasks);
+      console.log('Tasks fetched by date range:', tasks.length);
+    }
+  } catch (error) {
+    console.error('Error fetching tasks by date range:', error);
+  } finally {
+    isLoading.value = false;
   }
 };
 
-const onUserInputChange = () => {
-  // Handled by v-model
-};
-
 const applyFilters = () => {
+  // Cập nhật giá trị vào đối tượng lọc trong store
+  taskStore.currentFilters.dateRange.active = !!(fromDate.value && toDate.value);
+  taskStore.currentFilters.dateRange.fromDate = fromDate.value;
+  taskStore.currentFilters.dateRange.toDate = toDate.value;
+
+  taskStore.currentFilters.deadline.active = !!deadlineDate.value;
+  taskStore.currentFilters.deadline.date = deadlineDate.value;
+
+  taskStore.currentFilters.currentGroupOnly = currentGroupOnly.value;
+
+  // Áp dụng tất cả các bộ lọc
+  taskStore.applyAllFilters();
+
+  // Tạo đối tượng filter data để emit
   const filterData = {
-    timeFilter: selectedTimeFilter.value,
-    deadlineFilter: selectedDeadlineFilter.value,
-    userFilter: selectedUserFilter.value,
-    specificUserId: specificUserId.value
+    // Thông tin lọc khoảng thời gian
+    hasDateRange: taskStore.currentFilters.dateRange.active,
+    fromDate: fromDate.value,
+    toDate: toDate.value,
+
+    // Thông tin lọc ngày đến hạn
+    hasDeadline: taskStore.currentFilters.deadline.active,
+    deadlineDate: deadlineDate.value,
+
+    // Thông tin lọc nhóm hiện tại
+    currentGroupOnly: currentGroupOnly.value
   };
+
+  // Ghi log
   console.log('Applying filters:', filterData);
+
+  // Emit event để component cha biết về thay đổi filter
   emit('apply-filters', filterData);
-  isFilterVisible.value = false;
+
+  // Không đóng popover sau khi áp dụng lọc
+  // isFilterVisible.value = false;
 };
 
 const clearFilters = () => {
-  selectedTimeFilter.value = 'all';
-  selectedDeadlineFilter.value = 'all';
-  selectedUserFilter.value = 'all';
-  specificUserId.value = '';
+  // Xóa các giá trị filter
+  fromDate.value = '';
+  toDate.value = '';
+  deadlineDate.value = '';
+  currentGroupOnly.value = true;
+
+  // Xóa tất cả các bộ lọc từ store
+  taskStore.clearAllFilters();
+
+  // Ghi log
   console.log('Filters cleared');
+
+  // Emit event để component cha biết
   emit('clear-filters');
-  isFilterVisible.value = false; // Hide after clearing
+
+  // Đóng popover
+  isFilterVisible.value = false;
 };
 
 const emit = defineEmits(['apply-filters', 'clear-filters']);
@@ -218,40 +263,53 @@ const emit = defineEmits(['apply-filters', 'clear-filters']);
   gap: 6px;
 }
 
-.options {
+.date-range-inputs {
   display: flex;
+  gap: 12px;
   flex-wrap: wrap;
+}
+
+.date-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.date-input-container label {
+  font-size: 12px;
+  font-weight: normal;
+}
+
+.date-input-wrapper {
+  display: flex;
   align-items: center;
-  gap: 8px;
 }
 
-.options button {
-  padding: 4px 12px;
-  border: 1px solid #ccc;
-  border-radius: 16px;
-  background-color: white;
-  cursor: pointer;
-  font-size: 13px;
-  transition: all 0.2s;
-}
-
-.options button:hover {
-  background-color: #e9ecef;
-  border-color: #bbb;
-}
-
-.options button.active {
-  background-color: #e0f3ff;
-  color: #006ac7;
-  border-color: #99cfff;
-}
-
-.user-input {
-  padding: 4px 8px;
-  font-size: 13px;
+.date-input {
+  padding: 6px 10px;
   border: 1px solid #ccc;
   border-radius: 8px;
-  width: 100px;
+  font-size: 13px;
+}
+
+.checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.filter-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.checkbox-option label {
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
 }
 
 .filter-actions {
@@ -291,4 +349,8 @@ const emit = defineEmits(['apply-filters', 'clear-filters']);
   background-color: #c82333;
 }
 
+.deadline-label {
+  padding-bottom: 20px;
+  padding-top: 2px;
+}
 </style>

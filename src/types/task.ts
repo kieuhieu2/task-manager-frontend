@@ -7,10 +7,13 @@ export interface Task {
   groupId: number;
   state: TaskState;
   fileUrl?: string
-  fileType?: string
+  fileType?: string | null
   isCreator?: boolean
   deadline?: string
   taskType?: string
+  isFromDateRangeFilter?: boolean
+  isDeadlineFiltered?: boolean
+  isCurrentGroupFiltered?: boolean
 }
 
 export enum TaskState {

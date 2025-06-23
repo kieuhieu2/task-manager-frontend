@@ -30,6 +30,26 @@ export async function fetchTasks(groupId: number): Promise<Task[] | undefined> {
   }
 }
 
+export async function fetchTasksByDateRange(userCode: string, fromDate: string, toDate: string): Promise<Task[] | undefined> {
+  try {
+    const token = localStorage.getItem('token');
+    const res = await axiosInstance.post('/tasks/date-range',
+      { userCode, fromDate, toDate },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    return res.data.result;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(err.response?.data?.message || 'Không thể lấy danh sách công việc theo khoảng thời gian');
+  }
+}
+
 export async function updateTaskState(taskId: number, newState: string) {
   const token = localStorage.getItem('token')
   await put(
