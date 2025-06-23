@@ -1,6 +1,6 @@
 <template>
   <div class="login-container">
-    <form @submit.prevent="login">
+    <form @submit.prevent="login" v-if="!showForgotPassword">
       <h3>Quản lý công việc</h3>
 
       <label for="username">Tài khoản</label>
@@ -25,15 +25,83 @@
 
       <p v-if="error" class="error-message">{{ error }}</p>
 
-      <div class="social-icons">
-        <button class="social-icon fb" type="button">
-          <i class="fa-brands fa-facebook"></i>
+      <div class="forgot-password-container">
+        <button
+          class="forgot-password-btn"
+          type="button"
+          @click="toggleForgotPassword"
+        >
+          Quên mật khẩu
         </button>
-        <button class="social-icon tw" type="button">
-          <i class="fa-brands fa-twitter"></i>
+      </div>
+    </form>
+
+    <!-- Forgot Password Step 1: Enter username to check if exists -->
+    <form @submit.prevent="requestOTP" v-else-if="showForgotPassword && !showOTPInput">
+      <h3>Quên mật khẩu</h3>
+
+      <p class="instruction-text">Vui lòng nhập tên đăng nhập để lấy lại mật khẩu</p>
+
+      <label for="userCode">Tài khoản</label>
+      <input
+        type="text"
+        placeholder="Nhập tên đăng nhập"
+        id="userCode"
+        v-model="usernameInput"
+      />
+
+      <button type="submit" :disabled="isRequestingOTP">
+        {{ isRequestingOTP ? 'Đang kiểm tra...' : 'Tiếp tục' }}
+      </button>
+
+      <p v-if="forgotPasswordError" class="error-message">{{ forgotPasswordError }}</p>
+
+      <div class="forgot-password-container">
+        <button
+          class="back-btn"
+          type="button"
+          @click="toggleForgotPassword"
+        >
+          Quay lại đăng nhập
         </button>
-        <button class="social-icon in" type="button">
-          <i class="fa-brands fa-instagram"></i>
+      </div>
+    </form>
+
+    <!-- Forgot Password Step 2: Enter OTP and new password -->
+    <form @submit.prevent="resetPassword" v-else>
+      <h3>Đặt lại mật khẩu</h3>
+
+      <p class="success-message">Tài khoản hợp lệ. Mã OTP đã được gửi.</p>
+
+      <label for="otpCode">Mã OTP</label>
+      <input
+        type="text"
+        placeholder="Nhập mã OTP"
+        id="otpCode"
+        v-model="forgotPasswordForm.otpCode"
+      />
+
+      <label for="newPassword">Mật khẩu mới</label>
+      <input
+        type="password"
+        placeholder="Nhập mật khẩu mới"
+        id="newPassword"
+        v-model="forgotPasswordForm.newPassword"
+      />
+
+      <button type="submit" :disabled="isResettingPassword">
+        {{ isResettingPassword ? 'Đang xử lý...' : 'Đặt lại mật khẩu' }}
+      </button>
+
+      <p v-if="forgotPasswordError" class="error-message">{{ forgotPasswordError }}</p>
+
+      <div class="forgot-password-container">
+        <button
+          class="back-btn"
+          type="button"
+          @click="showOTPInput = false"
+        >
+          Quay lại
         </button>
       </div>
     </form>
@@ -41,19 +109,115 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, ref } from 'vue';
 import { useLogin } from '@/composables/useLogin.js'
+import axiosInstance from '@/api/axiosInstance';
 
 export default defineComponent({
   name: 'LoginForm',
   setup() {
     const { form, isLoading, error, login } = useLogin();
+    const showForgotPassword = ref(false);
+    const showOTPInput = ref(false);
+    const isRequestingOTP = ref(false);
+    const isResettingPassword = ref(false);
+    const forgotPasswordError = ref('');
+    const usernameInput = ref('');
+
+    const forgotPasswordForm = ref({
+      userCode: '',
+      otpCode: '',
+      newPassword: ''
+    });
+
+    const toggleForgotPassword = () => {
+      showForgotPassword.value = !showForgotPassword.value;
+      showOTPInput.value = false;
+      forgotPasswordError.value = '';
+      usernameInput.value = '';
+      forgotPasswordForm.value = {
+        userCode: '',
+        otpCode: '',
+        newPassword: ''
+      };
+    };
+
+    const requestOTP = async () => {
+      if (!usernameInput.value) {
+        forgotPasswordError.value = 'Vui lòng nhập tên đăng nhập';
+        return;
+      }
+
+      try {
+        isRequestingOTP.value = true;
+        forgotPasswordError.value = '';
+
+        // Step 1: Check if the username exists
+        const checkUserResponse = await axiosInstance.get(`/users/check/${usernameInput.value}`);
+
+        if (checkUserResponse.data && checkUserResponse.data.code === 1000) {
+          // Store the returned userCode
+          forgotPasswordForm.value.userCode = checkUserResponse.data.result;
+
+          // Step 2: Request the OTP
+          await axiosInstance.post('/auth/password-reset-request', {
+            userCode: forgotPasswordForm.value.userCode
+          });
+
+          // Show OTP input after both checks are successful
+          showOTPInput.value = true;
+        } else {
+          forgotPasswordError.value = 'Tên đăng nhập không tồn tại';
+        }
+      } catch (err: unknown) {
+        const error = err as { response?: { data?: { message?: string } } };
+        forgotPasswordError.value = error.response?.data?.message || 'Tên đăng nhập không tồn tại hoặc có lỗi xảy ra';
+      } finally {
+        isRequestingOTP.value = false;
+      }
+    };
+
+    const resetPassword = async () => {
+      if (!forgotPasswordForm.value.otpCode || !forgotPasswordForm.value.newPassword) {
+        forgotPasswordError.value = 'Vui lòng nhập đầy đủ thông tin';
+        return;
+      }
+
+      try {
+        isResettingPassword.value = true;
+        forgotPasswordError.value = '';
+
+        await axiosInstance.post('/auth/forget-password', {
+          userCode: forgotPasswordForm.value.userCode,
+          otpCode: forgotPasswordForm.value.otpCode,
+          newPassword: forgotPasswordForm.value.newPassword
+        });
+
+        // Reset to login form after successful password reset
+        toggleForgotPassword();
+      } catch (err: unknown) {
+        const error = err as { response?: { data?: { message?: string } } };
+        forgotPasswordError.value = error.response?.data?.message || 'Có lỗi xảy ra khi đặt lại mật khẩu';
+      } finally {
+        isResettingPassword.value = false;
+      }
+    };
 
     return {
       form,
       isLoading,
       error,
       login,
+      showForgotPassword,
+      showOTPInput,
+      usernameInput,
+      forgotPasswordForm,
+      forgotPasswordError,
+      isRequestingOTP,
+      isResettingPassword,
+      toggleForgotPassword,
+      requestOTP,
+      resetPassword
     };
   },
 });
@@ -171,35 +335,26 @@ button {
   }
 }
 
-.social-text {
-  font-size: 18px;
-  display: flex;
-  text-align: center;
-  justify-content: center;
-  align-items: center;
-  color: white;
-}
-
-.social-icons {
+.forgot-password-container {
   text-align: center;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.social-icon {
+.forgot-password-btn, .back-btn {
   min-height: 40px;
-  margin-right: 10px;
+  margin-top: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 40px;
-  max-width: 40px;
+  min-width: 150px;
+  max-width: 200px;
   max-height: 40px;
   border-radius: 40px;
   box-shadow: 0px 4px 8px rgba(12, 11, 11, 0);
   transition: all 0.5s ease;
-  font-size: 20px;
+  font-size: 16px;
 
   &:hover {
     box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.48);
@@ -212,8 +367,24 @@ button {
 }
 
 .error-message {
-  color: red;
+  color: #ff6b6b;
   text-align: center;
   margin-top: 10px;
+  font-weight: 500;
+}
+
+.instruction-text {
+  text-align: center;
+  margin: 15px 0;
+  font-size: 16px;
+  color: #e1e1e1;
+}
+
+.success-message {
+  text-align: center;
+  margin: 15px 0;
+  font-size: 16px;
+  color: #81ECAE;
+  font-weight: 600;
 }
 </style>
