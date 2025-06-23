@@ -83,18 +83,14 @@ export const getFileOfTask = async (taskId: number): Promise<{ fileUrl: string; 
     const response = await axiosInstance.get(`/tasks/file/${taskId}`, {
       responseType: 'blob', // Set the response type to 'blob' to handle binary data
       headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`, // Assuming token is stored in localStorage
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
       },
     });
 
     // Extract the filename from the Content-Disposition header
     const contentDisposition = response.headers['content-disposition'];
     const filenameMatch = contentDisposition && contentDisposition.match(/filename="(.+?)"/);
-    const filename = filenameMatch ? filenameMatch[1] : `downloaded_file`; // Correctly extract filename
-
-    console.log('Filename:', filename); // Log the filename for debugging
-    console.log('Content-Disposition:', contentDisposition); // Log the Content-Disposition header for debugging
-    console.log('Response Headers:', response.headers); // Log all response headers for debugging
+    const filename = filenameMatch ? filenameMatch[1] : `downloaded_file`;
 
     // Extract the file type from the filename
     const fileType = filename.split('.').pop() || 'unknown';
@@ -104,13 +100,32 @@ export const getFileOfTask = async (taskId: number): Promise<{ fileUrl: string; 
 
     return {
       fileUrl,
-      fileType, // Use the extracted file extension as fileType
-      fileName: filename, // Use filename from Content-Disposition
+      fileType,
+      fileName: filename,
     };
   } catch (error) {
     console.error('Error fetching file for task:', error);
     throw error;
   }
 };
+
+export async function updatePercentDone(taskId: number, userId: string, percentDone: number): Promise<void> {
+  try {
+    const token = localStorage.getItem('token');
+
+    await axiosInstance.put(`/tasks/percent-done/${taskId}`,
+      { userId, percentDone },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(err.response?.data?.message || 'Không thể cập nhật phần trăm hoàn thành');
+  }
+}
 
 

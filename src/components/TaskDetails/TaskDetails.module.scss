@@ -46,6 +46,7 @@
   p {
     margin: 10px 0;
     font-size: 16px;
+    display: flex;
 
     strong {
       font-weight: bold;
@@ -73,6 +74,25 @@
     textarea {
       resize: vertical;
       min-height: 50px;
+    }
+    
+    input[type="number"] {
+      width: auto;
+      min-width: 80px;
+      margin-right: 10px;
+    }
+    
+    .update-percent-btn {
+      background-color: #28a745;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      
+      &:hover {
+        background-color: #218838;
+      }
     }
   }
 }
@@ -262,4 +282,72 @@ button:hover {
   &:hover {
     color: #0056b3;
   }
+}
+
+.percent-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin: 10px 0;
+}
+
+.percent-row strong {
+  min-width: 180px;
+}
+
+.percent-slider-container {
+  flex: 0.2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.percent-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 8px;
+  background: #ddd;
+  outline: none;
+  border-radius: 4px;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #28a745;
+    cursor: pointer;
+    border-radius: 50%;
+    border: none;
+  }
+
+  &::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #28a745;
+    cursor: pointer;
+    border-radius: 50%;
+    border: none;
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.percent-value {
+  min-width: 45px;
+  font-weight: bold;
+  font-size: 16px;
+  text-align: right;
+}
+
+.updating {
+  color: #28a745;
+}
+
+.updating-text {
+  font-size: 0.8em;
+  font-weight: normal;
 }

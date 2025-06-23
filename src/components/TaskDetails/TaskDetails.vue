@@ -19,16 +19,35 @@
           <textarea v-else v-model="editedTask.description"></textarea>
         </p>
 
-        <p>
+        <p class="percent-row">
           <strong>Phần trăm hoàn thành:</strong>
-          <span v-if="!isEditing || !task?.isCreator">{{ editedTask.percentDone }}%</span>
-          <input v-else type="number" v-model="editedTask.percentDone" />
+          <template v-if="!isEditing && !canUpdatePercentDone">
+            <span>{{ editedTask.percentDone }}%</span>
+          </template>
+          <template v-else>
+            <div class="percent-slider-container">
+              <input
+                type="range"
+                v-model="editedTask.percentDone"
+                min="0"
+                max="100"
+                class="percent-slider"
+                @change="updateTaskPercentDone"
+                @input="updateSliderBackground"
+                :disabled="isUpdatingPercent"
+                :style="sliderStyle"
+              />
+              <span class="percent-value" :class="{ 'updating': isUpdatingPercent }">
+                {{ editedTask.percentDone }}%
+                <span v-if="isUpdatingPercent" class="updating-text">Đang cập nhật...</span>
+              </span>
+            </div>
+          </template>
         </p>
         <div class="deadline-info">
-        <span>Hạn chót: {{ formatDeadline(task.deadline) }}</span>
-      </div>
-<!--
-        <p><strong>ID người dùng:</strong> {{ task.userId }}</p>
+          <span>Hạn chót: {{ formatDeadline(task.deadline) }}</span>
+        </div>
+        <!-- <p><strong>ID người dùng:</strong> {{ task.userId }}</p>
         <p><strong>ID của nhóm:</strong> {{ task.groupId }}</p> -->
         <p><strong>Trạng thái công việc:</strong> {{ task.state }}</p>
 
@@ -97,10 +116,11 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch, computed } from 'vue'
 import type { Task } from '@/types/task';
 import { useTaskStore } from '@/stores/taskStore.js';
 import { createComment, fetchComments, updateComment, deleteComment } from '@/api/commentApi.js';
+import { updatePercentDone } from '@/api/task.js';
 import WorkProgressOfMenberLayout from '@/components/WorkProgressOfMenberLayout.vue';
 
 // Local interface declaration to resolve type conflicts
@@ -135,6 +155,20 @@ const comments = ref<Comment[]>([]);
 const editingCommentId = ref<number | null>(null);
 const editedCommentText = ref<string>('');
 const showProgressView = ref(false);
+const isUpdatingPercent = ref(false);
+
+const taskStore = useTaskStore();
+
+const canUpdatePercentDone = computed(() => {
+  return !!props.task && !!props.task.userId;
+});
+
+const sliderStyle = computed(() => {
+  const percent = editedTask.value?.percentDone || 0;
+  return {
+    background: `linear-gradient(to right, #28a745 0%, #28a745 ${percent}%, #ddd ${percent}%, #ddd 100%)`
+  };
+});
 
 watch(() => props.task, async (newTask) => {
   if (newTask) {
@@ -167,8 +201,6 @@ const toggleEdit = () => {
   }
   isEditing.value = !isEditing.value;
 };
-
-const taskStore = useTaskStore();
 
 const downloadFile = () => {
   const file = taskStore.selectedTaskFile;
@@ -267,8 +299,45 @@ const handleDeleteComment = async (commentId: number) => {
   }
 };
 
+const updateTaskPercentDone = async () => {
+  if (!props.task) {
+    alert('Không thể cập nhật phần trăm hoàn thành');
+    return;
+  }
+
+  const userId = props.task.userId;
+  if (!userId) {
+    alert('Không thể xác định người dùng cho công việc này');
+    return;
+  }
+
+  try {
+    // Ensure percentDone is a number
+    const percentDoneValue = parseInt(editedTask.value.percentDone as unknown as string) || 0;
+
+    isUpdatingPercent.value = true;
+
+    await updatePercentDone(
+      props.task.taskId,
+      userId,
+      percentDoneValue
+    );
+
+  } catch (error) {
+    console.error('Lỗi khi cập nhật phần trăm hoàn thành:', error);
+    alert('Không thể cập nhật phần trăm hoàn thành');
+  } finally {
+    isUpdatingPercent.value = false;
+  }
+};
+
 const toggleProgressView = () => {
   showProgressView.value = !showProgressView.value;
+};
+
+const updateSliderBackground = () => {
+  // This function is empty because the computed property sliderStyle automatically updates
+  // when editedTask.percentDone changes during dragging
 };
 </script>
 
