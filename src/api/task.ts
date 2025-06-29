@@ -50,17 +50,29 @@ export async function fetchTasksByDateRange(userCode: string, fromDate: string, 
   }
 }
 
-export async function updateTaskState(taskId: number, newState: string) {
-  const token = localStorage.getItem('token')
-  await put(
-    `/tasks/update-state/${taskId}/${newState}`,
-    {},
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
+export async function updateTaskState(taskId: number, newState: string, positionInColumn?: number) {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.put(
+      '/tasks/update-task-state',
+      {
+        taskId,
+        newState,
+        positionInColumn
       },
-    },
-  )
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    return response.data;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(err.response?.data?.message || 'Không thể cập nhật trạng thái công việc');
+  }
 }
 
 export async function deleteTask(taskId: number): Promise<string> {
@@ -78,6 +90,7 @@ export async function updateTask(editedTask: Task): Promise<Task> {
     state: editedTask.state,
     fileUrl: editedTask.fileUrl,
     fileType: editedTask.fileType,
+    positionInColumn: editedTask.positionInColumn
   }
 }
 

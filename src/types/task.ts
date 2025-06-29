@@ -14,6 +14,7 @@ export interface Task {
   isFromDateRangeFilter?: boolean
   isDeadlineFiltered?: boolean
   isCurrentGroupFiltered?: boolean
+  positionInColumn?: number
 }
 
 export enum TaskState {

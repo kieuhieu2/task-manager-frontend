@@ -111,7 +111,7 @@
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
 import { useLogin } from '@/composables/useLogin.js'
-import axiosInstance from '@/api/axiosInstance';
+import axios from 'axios'
 
 export default defineComponent({
   name: 'LoginForm',
@@ -148,27 +148,33 @@ export default defineComponent({
         return;
       }
 
+      // Prevent double submission
+      if (isRequestingOTP.value) {
+        return;
+      }
+
       try {
         isRequestingOTP.value = true;
         forgotPasswordError.value = '';
 
-        // Step 1: Check if the username exists
-        const checkUserResponse = await axiosInstance.get(`/users/check/${usernameInput.value}`);
+        const checkUserResponse = await axios.get(`http://localhost:8080/users/check/${usernameInput.value}`);
 
-        if (checkUserResponse.data && checkUserResponse.data.code === 1000) {
-          // Store the returned userCode
+        if (checkUserResponse.data.code === 1000) {
           forgotPasswordForm.value.userCode = checkUserResponse.data.result;
 
-          // Step 2: Request the OTP
-          await axiosInstance.post('/auth/password-reset-request', {
-            userCode: forgotPasswordForm.value.userCode
-          });
-
-          // Show OTP input after both checks are successful
           showOTPInput.value = true;
         } else {
           forgotPasswordError.value = 'Tên đăng nhập không tồn tại';
         }
+
+        try {
+          await axios.post('http://localhost:8080/auth/password-reset-request', {
+            userCode: forgotPasswordForm.value.userCode
+          });
+        } catch (error) {
+          console.log(error);
+        }
+
       } catch (err: unknown) {
         const error = err as { response?: { data?: { message?: string } } };
         forgotPasswordError.value = error.response?.data?.message || 'Tên đăng nhập không tồn tại hoặc có lỗi xảy ra';
@@ -187,13 +193,12 @@ export default defineComponent({
         isResettingPassword.value = true;
         forgotPasswordError.value = '';
 
-        await axiosInstance.post('/auth/forget-password', {
+        await axios.post('http://localhost:8080/auth/forget-password', {
           userCode: forgotPasswordForm.value.userCode,
           otpCode: forgotPasswordForm.value.otpCode,
           newPassword: forgotPasswordForm.value.newPassword
         });
 
-        // Reset to login form after successful password reset
         toggleForgotPassword();
       } catch (err: unknown) {
         const error = err as { response?: { data?: { message?: string } } };
@@ -297,7 +302,7 @@ input {
   }
 
   &:focus {
-    box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.17), 0px 5px 10px rgba(0, 0, 0, 0.21);
+    box-shadow: 2px 2px rgba(0, 0, 0, 0.17), 5px 10px rgba(0, 0, 0, 0.21);
     background: #434343;
   }
 
@@ -325,7 +330,7 @@ button {
   }
 
   &:focus {
-    box-shadow: 0px 0px 0px 2px rgba(103, 110, 103, 0.71);
+    box-shadow: 0 0 0 2px rgba(103, 110, 103, 0.71);
     background: #629677;
   }
 
@@ -352,16 +357,16 @@ button {
   max-width: 200px;
   max-height: 40px;
   border-radius: 40px;
-  box-shadow: 0px 4px 8px rgba(12, 11, 11, 0);
+  box-shadow: 0 4px 8px rgba(12, 11, 11, 0);
   transition: all 0.5s ease;
   font-size: 16px;
 
   &:hover {
-    box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.48);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.48);
   }
 
   &:focus {
-    box-shadow: 0px 0px 0px 2px currentColor;
+    box-shadow: 0 0 0 2px currentColor;
     transform: scale(0.9);
   }
 }
