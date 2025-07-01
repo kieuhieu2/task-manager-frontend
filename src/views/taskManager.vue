@@ -1,146 +1,153 @@
 <template>
-  <HeaderOnly @toggle-trash="toggleTrashColumn" />
-  <LeftNavbar
-    :is-visible="isNavbarVisible"
-    @showCreateTask="handleShowCreateTask"
-    @showCreateGroup="handleShowCreateGroup"
-    @showSpam="handleShowSpam"
-  />
-  <button @click="toggleNavbar" class="navbar-toggle-button">
-    {{ isNavbarVisible ? '<' : '>' }}
-  </button>
+  <!-- Desktop view -->
+  <div v-if="!isMobile" class="desktop-view">
+    <HeaderOnly @toggle-trash="toggleTrashColumn" />
+    <LeftNavbar
+      :is-visible="isNavbarVisible"
+      @showCreateTask="handleShowCreateTask"
+      @showCreateGroup="handleShowCreateGroup"
+      @showSpam="handleShowSpam"
+    />
+    <button @click="toggleNavbar" class="navbar-toggle-button">
+      {{ isNavbarVisible ? '<' : '>' }}
+    </button>
 
-  <div class="filter-container">
-    <TaskFilter
-      @apply-filters="handleApplyFilters"
-      @clear-filters="handleClearFilters"
+    <div class="filter-container">
+      <TaskFilter
+        @apply-filters="handleApplyFilters"
+        @clear-filters="handleClearFilters"
+      />
+    </div>
+
+    <div class="task-manager-container">
+      <div class="row">
+        <div class="col-3" id="todoColumn">
+          <h3>Cần Làm</h3>
+          <Draggable
+            class="list-group"
+            :list="list1"
+            group="tasks"
+            @change="(event) => log(event, TaskState.TODO)"
+            itemKey="taskId"
+          >
+            <template #item="{ element }">
+              <div
+                class="list-group-item"
+                @click="groupId !== null && openTaskDetails(groupId, element.taskId)"
+                :style="{ backgroundColor: getTaskBackgroundColor(element.deadline) }"
+              >
+                <h5>{{ element.title }}</h5>
+                <p>{{ element.description }}</p>
+                <div class="task-status-row">
+                  <p>{{ element.percentDone }}%</p>
+                  <p v-if="element.isCreator" style="color: red;">Bạn là người giao công việc này</p>
+                </div>
+                <div class="task-deadline" v-if="element.deadline">
+                  <p class="deadline-text">Đến hạn: {{ formatDeadline(element.deadline) }}</p>
+                </div>
+              </div>
+            </template>
+          </Draggable>
+        </div>
+
+        <div class="col-3" id="inProgressColumn">
+          <h3>Đang Làm</h3>
+          <Draggable
+            class="list-group"
+            :list="list2"
+            group="tasks"
+            @change="(event) => log(event, TaskState.IN_PROGRESS)"
+            itemKey="taskId"
+          >
+            <template #item="{ element }">
+              <div
+                class="list-group-item"
+                @click="groupId !== null && openTaskDetails(groupId, element.taskId)"
+                :style="{ backgroundColor: getTaskBackgroundColor(element.deadline) }"
+              >
+                <h5>{{ element.title }}</h5>
+                <p>{{ element.description }}</p>
+                <div class="task-status-row">
+                  <p>{{ element.percentDone }}%</p>
+                  <p v-if="element.isCreator" style="color: red;">Bạn là người giao công việc này</p>
+                </div>
+                <div class="task-deadline" v-if="element.deadline">
+                  <p class="deadline-text">Hạn: {{ formatDeadline(element.deadline) }}</p>
+                </div>
+              </div>
+            </template>
+          </Draggable>
+        </div>
+
+        <div class="col-3" id="doneColumn">
+          <h3>Đã Xong</h3>
+          <Draggable
+            class="list-group"
+            :list="list3"
+            group="tasks"
+            @change="(event) => log(event, TaskState.DONE)"
+            itemKey="taskId"
+          >
+            <template #item="{ element }">
+              <div class="list-group-item" @click="groupId !== null && openTaskDetails(groupId, element.taskId)">
+                <h5>{{ element.title }}</h5>
+                <p>{{ element.description }}</p>
+                <div class="task-status-row">
+                  <p>{{ element.percentDone }}%</p>
+                  <p v-if="element.isCreator" style="color: red;">Bạn là người giao công việc này</p>
+                </div>
+                <div class="task-deadline" v-if="element.deadline">
+                  <p class="deadline-text">Đến hạn: {{ formatDeadline(element.deadline) }}</p>
+                </div>
+              </div>
+            </template>
+          </Draggable>
+        </div>
+
+        <div class="col-3" id="spamColumn" v-if="isTrashVisible">
+          <h3>Rác</h3>
+          <Draggable
+            class="list-group"
+            :list="list4"
+            group="tasks"
+            @change="(event) => log(event, TaskState.SPAM)"
+            itemKey="taskId"
+          >
+            <template #item="{ element }">
+              <div
+                class="list-group-item"
+                @click="groupId !== null && openTaskDetails(groupId, element.taskId)"
+                :style="{ backgroundColor: getTaskBackgroundColor(element.deadline) }"
+              >
+                <h5>{{ element.title }}</h5>
+                <p>{{ element.description }}</p>
+                <div class="task-status-row">
+                  <p>{{ element.percentDone }}%</p>
+                  <p v-if="element.isCreator" style="color: red;">Bạn là người giao công việc này</p>
+                </div>
+                <div class="task-deadline" v-if="element.deadline">
+                  <p class="deadline-text">Đến hạn: {{ formatDeadline(element.deadline) }}</p>
+                </div>
+              </div>
+            </template>
+          </Draggable>
+        </div>
+      </div>
+    </div>
+
+    <TaskDetails
+      :task="selectedTask"
+      :visible="isTaskDetailsVisible"
+      @close="closeTaskDetails"
+      @update-task="updateTaskHandler"
+      @delete-task="deleteTaskHandler"
     />
   </div>
 
-  <div class="task-manager-container">
-    <div class="row">
-      <div class="col-3" id="todoColumn">
-        <h3>Cần Làm</h3>
-        <Draggable
-          class="list-group"
-          :list="list1"
-          group="tasks"
-          @change="(event) => log(event, TaskState.TODO)"
-          itemKey="taskId"
-        >
-          <template #item="{ element }">
-            <div
-              class="list-group-item"
-              @click="groupId !== null && openTaskDetails(groupId, element.taskId)"
-              :style="{ backgroundColor: getTaskBackgroundColor(element.deadline) }"
-            >
-              <h5>{{ element.title }}</h5>
-              <p>{{ element.description }}</p>
-              <div class="task-status-row">
-                <p>{{ element.percentDone }}%</p>
-                <p v-if="element.isCreator" style="color: red;">Bạn là người giao công việc này</p>
-              </div>
-              <div class="task-deadline" v-if="element.deadline">
-                <p class="deadline-text">Đến hạn: {{ formatDeadline(element.deadline) }}</p>
-              </div>
-            </div>
-          </template>
-        </Draggable>
-      </div>
-
-      <div class="col-3" id="inProgressColumn">
-        <h3>Đang Làm</h3>
-        <Draggable
-          class="list-group"
-          :list="list2"
-          group="tasks"
-          @change="(event) => log(event, TaskState.IN_PROGRESS)"
-          itemKey="taskId"
-        >
-          <template #item="{ element }">
-            <div
-              class="list-group-item"
-              @click="groupId !== null && openTaskDetails(groupId, element.taskId)"
-              :style="{ backgroundColor: getTaskBackgroundColor(element.deadline) }"
-            >
-              <h5>{{ element.title }}</h5>
-              <p>{{ element.description }}</p>
-              <div class="task-status-row">
-                <p>{{ element.percentDone }}%</p>
-                <p v-if="element.isCreator" style="color: red;">Bạn là người giao công việc này</p>
-              </div>
-              <div class="task-deadline" v-if="element.deadline">
-                <p class="deadline-text">Hạn: {{ formatDeadline(element.deadline) }}</p>
-              </div>
-            </div>
-          </template>
-        </Draggable>
-      </div>
-
-      <div class="col-3" id="doneColumn">
-        <h3>Đã Xong</h3>
-        <Draggable
-          class="list-group"
-          :list="list3"
-          group="tasks"
-          @change="(event) => log(event, TaskState.DONE)"
-          itemKey="taskId"
-        >
-          <template #item="{ element }">
-            <div class="list-group-item" @click="groupId !== null && openTaskDetails(groupId, element.taskId)">
-              <h5>{{ element.title }}</h5>
-              <p>{{ element.description }}</p>
-              <div class="task-status-row">
-                <p>{{ element.percentDone }}%</p>
-                <p v-if="element.isCreator" style="color: red;">Bạn là người giao công việc này</p>
-              </div>
-              <div class="task-deadline" v-if="element.deadline">
-                <p class="deadline-text">Đến hạn: {{ formatDeadline(element.deadline) }}</p>
-              </div>
-            </div>
-          </template>
-        </Draggable>
-      </div>
-
-      <div class="col-3" id="spamColumn" v-if="isTrashVisible">
-        <h3>Rác</h3>
-        <Draggable
-          class="list-group"
-          :list="list4"
-          group="tasks"
-          @change="(event) => log(event, TaskState.SPAM)"
-          itemKey="taskId"
-        >
-          <template #item="{ element }">
-            <div
-              class="list-group-item"
-              @click="groupId !== null && openTaskDetails(groupId, element.taskId)"
-              :style="{ backgroundColor: getTaskBackgroundColor(element.deadline) }"
-            >
-              <h5>{{ element.title }}</h5>
-              <p>{{ element.description }}</p>
-              <div class="task-status-row">
-                <p>{{ element.percentDone }}%</p>
-                <p v-if="element.isCreator" style="color: red;">Bạn là người giao công việc này</p>
-              </div>
-              <div class="task-deadline" v-if="element.deadline">
-                <p class="deadline-text">Đến hạn: {{ formatDeadline(element.deadline) }}</p>
-              </div>
-            </div>
-          </template>
-        </Draggable>
-      </div>
-    </div>
+  <!-- Mobile view -->
+  <div v-else class="mobile-view">
+    <TaskDetailMobile />
   </div>
-
-
-  <TaskDetails
-    :task="selectedTask"
-    :visible="isTaskDetailsVisible"
-    @close="closeTaskDetails"
-    @update-task="updateTaskHandler"
-    @delete-task="deleteTaskHandler"
-  />
 
   <Teleport to="body">
     <div v-if="showCreateGroup" class="modal-overlay">
@@ -160,7 +167,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch, ref } from 'vue';
+import { computed, onMounted, onUnmounted, watch, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import HeaderOnly from '@/layouts/HeaderOnly/headerOnly.vue';
 import { useTaskManager } from '@/composables/uesTaskManager.js';
@@ -174,9 +181,29 @@ import type { Task } from '@/types/task';
 import { updateTask, deleteTask } from '@/api/task.js';
 import { useTaskStore } from "@/stores/taskStore.ts";
 import TaskFilter from '@/components/TaskFilter.vue';
+import TaskDetailMobile from '@/components/Mobile/TaskDetailMobile.vue';
 
 const route = useRoute();
 const taskStore = useTaskStore();
+
+// Responsive state
+const isMobile = ref(false);
+
+// Check if device is mobile
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 768;
+};
+
+// Initialize and add resize listener
+onMounted(() => {
+  checkMobile();
+  window.addEventListener('resize', checkMobile);
+});
+
+// Remove event listener on component unmount
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile);
+});
 
 // Left Navbar state and methods
 const isNavbarVisible = ref(false);
@@ -281,7 +308,7 @@ const {
     const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
     if (daysLeft <= 1) {
-      return '#ffebee'; // Đỏ nhạt nếu deadline còn 3 ngày hoặc ít hơn
+      return '#ffebee';
     } else if (daysLeft <= 3) {
       return '#fff3e0'; // Cam nhạt nếu deadline còn 7 ngày hoặc ít hơn
     } else if (daysLeft <= 7) {
@@ -368,7 +395,28 @@ const {
 </script>
 
 <style scoped lang="scss">
+/* Mobile/Desktop View Styles */
+@media screen and (max-width: 768px) {
+  .desktop-view {
+    display: none;
+  }
 
+  .mobile-view {
+    display: block;
+  }
+}
+
+@media screen and (min-width: 769px) {
+  .desktop-view {
+    display: block;
+  }
+
+  .mobile-view {
+    display: none;
+  }
+}
+
+/* Existing styles */
 .row {
   display: flex;
   justify-content: center;

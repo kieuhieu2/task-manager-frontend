@@ -1,4 +1,5 @@
 import axiosInstance from "./axiosInstance.ts";
+import type { Comment } from '@/types/comment.ts';
 
 export async function fetchComments(taskId: number): Promise<Comment[] | undefined> {
     try {
@@ -9,8 +10,11 @@ export async function fetchComments(taskId: number): Promise<Comment[] | undefin
         });
 
         return res.data.result;
-    } catch (error: any) {
-        throw new Error(error.response?.data?.message || 'Không thể lấy danh sách bình luận');
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error('Không thể lấy danh sách bình luận');
     }
 }
 
@@ -27,8 +31,11 @@ export async function createComment(taskId: number, commentText: string): Promis
         );
 
         return res.data.result;
-    } catch (error: any) {
-        throw new Error(error.response?.data?.message || 'Không thể tạo bình luận');
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error('Không thể tạo bình luận');
     }
 }
 
@@ -44,8 +51,11 @@ export async function updateComment(commentId: number, commentText: string): Pro
         },
       }
     );
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Không thể sửa bình luận');
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+        throw error;
+    }
+    throw new Error('Không thể sửa bình luận');
   }
 }
 
@@ -56,7 +66,10 @@ export async function deleteComment(commentId: number): Promise<void> {
         Authorization: `Bearer ${localStorage.getItem('token')}`,
       },
     });
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Không thể xóa bình luận');
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+        throw error;
+    }
+    throw new Error('Không thể xóa bình luận');
   }
 }

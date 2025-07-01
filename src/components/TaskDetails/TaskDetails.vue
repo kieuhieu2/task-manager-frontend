@@ -123,7 +123,6 @@ import { createComment, fetchComments, updateComment, deleteComment } from '@/ap
 import { updatePercentDone } from '@/api/task.js';
 import WorkProgressOfMenberLayout from '@/components/WorkProgressOfMenberLayout.vue';
 
-// Local interface declaration to resolve type conflicts
 interface Comment {
   commentId: number;
   commentText: string;

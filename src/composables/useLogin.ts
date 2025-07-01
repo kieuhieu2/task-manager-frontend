@@ -6,18 +6,12 @@ import { jwtDecode } from "jwt-decode";
 import axios from 'axios'
 import { useTaskStore } from "@/stores/taskStore.js";
 import { useNotificationStore } from '@/stores/notificationStore.ts'
-import { getMyAvatar } from "@/api/userApi.js";
 import { useUserStore } from "@/stores/userStore.ts";
+import { getFullNameByUserCode } from '@/api/userApi.ts';
 
 interface LoginForm {
   username: string;
   password: string;
-}
-
-interface ApiResponse<T> {
-  code?: number;
-  message?: string;
-  result: T;
 }
 
 export function useLogin() {

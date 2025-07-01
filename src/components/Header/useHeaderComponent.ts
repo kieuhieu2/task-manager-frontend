@@ -4,7 +4,7 @@ import { useGetMyGroupsStore } from '@/stores/groupsStore.js';
 import type { Group } from '@/types/group.js';
 import { useNotificationStore } from '@/stores/notificationStore.js'
 import { storeToRefs } from 'pinia'
-import { getMyAvatar } from '@/api/userApi.js'
+import { getFullNameByUserCode, getMyAvatar } from '@/api/userApi.js'
 import { useUserStore } from '@/stores/userStore.js'
 
 export const useHeaderComponent = () => {
@@ -44,9 +44,22 @@ export const useHeaderComponent = () => {
     }
   }
 
+  async function fetchFullName() {
+    const userCode = localStorage.getItem('userCode');
+    if (userCode) {
+      try {
+        const fullName = await getFullNameByUserCode(userCode);
+        userStore.setFullName(fullName);
+      } catch (error) {
+        console.error('Error fetching fullname:', error);
+      }
+    }
+  }
+
   onMounted(() => {
     getNotifications();
     fetchAvatar();
+    fetchFullName();
   });
 
   const notificationDropdownOpen = ref(false);
@@ -192,5 +205,6 @@ export const useHeaderComponent = () => {
 
     // Avatar
     fetchAvatar,
+    fetchFullName,
   };
 };

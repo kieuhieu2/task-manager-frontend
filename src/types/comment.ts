@@ -1,6 +1,9 @@
 export interface Comment {
   commentId: number
-  commentText: string
-  userName: string
+  taskId: number
   userCode: string
+  userName: string
+  commentText: string
+  createdAt?: string
+  updatedAt?: string
 }

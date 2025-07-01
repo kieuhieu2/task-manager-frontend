@@ -1,6 +1,6 @@
 import type { Task } from '@/types/task.js'
 import type { ApiResponse } from '@/types/api.js'
-import { get, put, post } from './axiosInstance.js'
+import { get, put } from './axiosInstance.js'
 import axiosInstance from './axiosInstance.js';
 
 export async function createTask(formData: FormData): Promise<Task> {
@@ -22,7 +22,6 @@ export async function createTask(formData: FormData): Promise<Task> {
 export async function fetchTasks(groupId: number): Promise<Task[] | undefined> {
   try {
     const res: ApiResponse<Task[]> = await get(`/tasks/${groupId}`, {})
-
     return res.result
   } catch (error: unknown) {
     const err = error as { response?: { data?: { message?: string } } };

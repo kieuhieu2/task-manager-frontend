@@ -1,44 +1,50 @@
 <template>
-  <HeaderOnly></HeaderOnly>
-  <div class="group-container">
-    <div
-      v-for="group in groups"
-      :key="group.groupId"
-      class="group-item"
-    >
-
+  <!-- Show desktop view on larger screens -->
+  <div v-if="!isMobileView">
+    <HeaderOnly></HeaderOnly>
+    <div class="group-container">
       <div
-        v-if="editingGroupId === group.groupId"
-        class="group-content">
-        <input v-model="editedName" class="edit-input" />
-        <textarea v-model="editedDescription" class="edit-textarea"></textarea>
-        <div class="action-buttons">
-          <button @click="saveEdit(group.groupId)" class="save-button">Lưu</button>
-          <button @click="showGroupMembers(group)" class="members-button">Thành viên</button>
-          <button @click="editingGroupId = null" class="cancel-button">Hủy</button>
+        v-for="group in groups"
+        :key="group.groupId"
+        class="group-item"
+      >
+        <div
+          v-if="editingGroupId === group.groupId"
+          class="group-content">
+          <input v-model="editedName" class="edit-input" />
+          <textarea v-model="editedDescription" class="edit-textarea"></textarea>
+          <div class="action-buttons">
+            <button @click="saveEdit(group.groupId)" class="save-button">Lưu</button>
+            <button @click="showGroupMembers(group)" class="members-button">Thành viên</button>
+            <button @click="editingGroupId = null" class="cancel-button">Hủy</button>
+          </div>
         </div>
-      </div>
-      <div v-else class="group-content">
-        <button
-          class="group-button"
-          @click="handleGroupClick(group)">
-          {{ group.nameOfGroup }}
-        </button>
-        <p class="group-description">{{ group.descriptionOfGroup }}</p>
-        <div class="action-buttons" v-if="group.isLeader">
-          <button @click="startEditing(group)" class="edit-button">Sửa</button>
-          <button @click="showGroupMembers(group)" class="members-button">Thành viên</button>
-          <button @click="deleteGroupHandler(group.groupId)" class="delete-button">Xóa</button>
-        </div>
-        <div class="action-buttons" v-else>
-          <button @click="showGroupMembers(group)" class="members-button">Thành viên</button>
+        <div v-else class="group-content">
+          <button
+            class="group-button"
+            @click="handleGroupClick(group)">
+            {{ group.nameOfGroup }}
+          </button>
+          <p class="group-description">{{ group.descriptionOfGroup }}</p>
+          <div class="action-buttons" v-if="group.isLeader">
+            <button @click="startEditing(group)" class="edit-button">Sửa</button>
+            <button @click="showGroupMembers(group)" class="members-button">Thành viên</button>
+            <button @click="deleteGroupHandler(group.groupId)" class="delete-button">Xóa</button>
+          </div>
+          <div class="action-buttons" v-else>
+            <button @click="showGroupMembers(group)" class="members-button">Thành viên</button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Show mobile view on smaller screens -->
+  <GetMyGroupsMobile v-else />
+
+  <!-- Modals (will be used by both desktop and mobile) -->
   <GroupMembersLayout
-    v-if="showMembersModal"
+    v-if="showMembersModal && !isMobileView"
     :groupId="selectedGroupId"
     :isLeader="selectedGroupIsLeader"
     @close="closeMembersModal"
@@ -49,11 +55,12 @@
 import HeaderOnly from '@/layouts/HeaderOnly/headerOnly.vue'
 import GroupMembersLayout from '@/components/GroupMembersLayout.vue'
 import { useGetMyGroups } from '@/composables/useGetMyGroups.js'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, onBeforeMount, onUnmounted } from 'vue'
 import { updateGroup, deleteGroup } from '@/api/GroupsApi.js'
 import type { Group } from '@/types/group.js'
 import { useGetMyGroupsStore } from '@/stores/groupsStore.js'
 import { useRouter } from 'vue-router'
+import GetMyGroupsMobile from '@/components/Mobile/GetMyGroupsMobile.vue'
 
 const { groups, fetchGroups } = useGetMyGroups();
 const router = useRouter();
@@ -65,6 +72,21 @@ const editedDescription = ref('');
 const showMembersModal = ref(false);
 const selectedGroupId = ref<number>(0);
 const selectedGroupIsLeader = ref(false);
+
+// Mobile detection
+const isMobileView = ref(false);
+const checkIfMobile = () => {
+  isMobileView.value = window.innerWidth <= 768; // Common breakpoint for mobile
+};
+
+onBeforeMount(() => {
+  checkIfMobile();
+  window.addEventListener('resize', checkIfMobile);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkIfMobile);
+});
 
 onMounted(() => {
   fetchGroups();
@@ -287,5 +309,11 @@ const handleGroupClick = (group: Group) => {
   border: 1px solid #ddd;
   resize: vertical;
   flex-grow: 1;
+}
+
+@media (max-width: 768px) {
+  .group-container {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

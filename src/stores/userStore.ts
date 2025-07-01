@@ -27,6 +27,10 @@ export const useUserStore = defineStore('user', {
       this.avatar = avatar;
     },
 
+    setFullName(fullName: string) {
+      this.fullName = fullName;
+    },
+
     setUserInfo(userInfo: { userCode?: string, fullName?: string, email?: string }) {
       if (userInfo.userCode) {
         this.userCode = userInfo.userCode;

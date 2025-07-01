@@ -2,8 +2,6 @@ import { ref, watch } from 'vue';
 import { useTaskStore } from '@/stores/taskStore.ts';
 import type { Task } from '@/types/task.js';
 import { onMounted } from 'vue';
-import { useCommentsStore } from '@/stores/commentStore.js'
-import { storeToRefs } from 'pinia'
 
 export function useTask(groupId: number) {
   const store = useTaskStore();
