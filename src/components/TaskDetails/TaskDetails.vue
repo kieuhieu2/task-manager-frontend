@@ -5,22 +5,25 @@
       <h2>Chi tiết công việc</h2>
 
       <div class="task-info">
-        <p><strong>Mã công việc:</strong> {{ task.taskId }}</p>
+        <p>
+          <strong>Mã công việc</strong>
+          <span>{{ task.taskId }}</span>
+        </p>
 
         <p>
-          <strong>Tiêu đề:</strong>
+          <strong>Tiêu đề</strong>
           <span v-if="!isEditing || !task?.isCreator">{{ editedTask.title }}</span>
           <input v-else v-model="editedTask.title" />
         </p>
 
         <p>
-          <strong>Mô tả công việc:</strong>
+          <strong>Mô tả công việc</strong>
           <span v-if="!isEditing || !task?.isCreator">{{ editedTask.description }}</span>
           <textarea v-else v-model="editedTask.description"></textarea>
         </p>
 
         <p class="percent-row">
-          <strong>Phần trăm hoàn thành:</strong>
+          <strong>Phần trăm hoàn thành</strong>
           <template v-if="!isEditing && !canUpdatePercentDone">
             <span>{{ editedTask.percentDone }}%</span>
           </template>
@@ -44,10 +47,11 @@
             </div>
           </template>
         </p>
+
         <div class="deadline-info">
-          <span v-if="!isEditing"><strong>Hạn chót:</strong> {{ formatDeadline(task.deadline) }}</span>
+          <strong>Hạn chót</strong>
+          <span v-if="!isEditing">{{ formatDeadline(task.deadline) }}</span>
           <div v-else class="deadline-edit">
-            <strong>Hạn chót:</strong>
             <input
               type="date"
               v-model="editedDeadline"
@@ -57,15 +61,19 @@
         </div>
         <!-- <p><strong>ID người dùng:</strong> {{ task.userId }}</p>
         <p><strong>ID của nhóm:</strong> {{ task.groupId }}</p> -->
-        <p><strong>Trạng thái công việc:</strong> {{ task.state }}</p>
+        <p>
+          <strong>Trạng thái:</strong>
+          <span>{{ task.state }}</span>
+        </p>
 
-        <p v-if="task.isCreator" class="progress-link" @click="toggleProgressView">
-          <strong>Tiến độ các thành viên thực hiện</strong>
+        <p v-if="task.isCreator" class="progress-link">
+          <strong></strong>
+          <span @click="toggleProgressView">Tiến độ các thành viên thực hiện</span>
         </p>
 
         <div v-if="taskStore.selectedTaskFile" class="file-attachment">
           <p>
-            <strong>Tệp đính kèm:</strong>
+            <strong>Tệp đính kèm</strong>
             <span>{{ taskStore.selectedTaskFile.fileName || `File.${taskStore.selectedTaskFile.fileType}` }}</span>
           </p>
           <button @click="downloadFile" class="file-download-btn">
@@ -73,7 +81,7 @@
           </button>
         </div>
         <p v-else-if="task.fileUrl">
-          <strong>Tệp đính kèm:</strong>
+          <strong>Tệp đính kèm</strong>
           <span>{{ task.fileUrl }}</span>
           <button @click="reloadFile" class="file-download-btn">
             Thử tải lại

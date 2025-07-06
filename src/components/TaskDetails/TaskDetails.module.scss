@@ -46,11 +46,17 @@
   p {
     margin: 10px 0;
     font-size: 16px;
-    display: flex;
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    align-items: center;
 
     strong {
       font-weight: bold;
-      margin-right: 5px;
+      grid-column: 1;
+    }
+
+    span, input, textarea, .percent-slider-container, .update-percent-btn {
+      grid-column: 2;
     }
 
     a {
@@ -135,6 +141,7 @@ button:hover {
 
 .file-download-btn {
   margin-top: 10px;
+  margin-left: 160px;
   padding: 8px 12px;
   background-color: #007bff;
   color: white;
@@ -142,10 +149,10 @@ button:hover {
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
-}
-
-.file-download-btn:hover {
-  background-color: #0056b3;
+  
+  &:hover {
+    background-color: #0056b3;
+  }
 }
 
 .comments-section {
@@ -275,28 +282,40 @@ button:hover {
 }
 
 .progress-link {
-  color: #007bff;
-  cursor: pointer;
-  text-decoration: underline;
-
-  &:hover {
-    color: #0056b3;
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  align-items: center;
+  margin: 10px 0;
+  
+  span {
+    color: #007bff;
+    cursor: pointer;
+    text-decoration: underline;
+    grid-column: 2;
+    
+    &:hover {
+      color: #0056b3;
+    }
   }
 }
 
 .percent-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 160px 1fr;
   align-items: center;
-  justify-content: flex-start;
   margin: 10px 0;
+
+  strong {
+    grid-column: 1;
+  }
 }
 
 .percent-row strong {
-  min-width: 180px;
+  min-width: auto;
 }
 
 .percent-slider-container {
-  flex: 0.2;
+  width: 250px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -355,11 +374,21 @@ button:hover {
 .deadline-info {
   margin: 10px 0;
   font-size: 16px;
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  align-items: center;
+  
+  strong {
+    grid-column: 1;
+  }
+  
+  span, .deadline-edit {
+    grid-column: 2;
+  }
   
   .deadline-edit {
     display: flex;
     align-items: center;
-    gap: 10px;
     
     .date-picker {
       padding: 8px 12px;
