@@ -45,7 +45,15 @@
           </template>
         </p>
         <div class="deadline-info">
-          <span>Hạn chót: {{ formatDeadline(task.deadline) }}</span>
+          <span v-if="!isEditing"><strong>Hạn chót:</strong> {{ formatDeadline(task.deadline) }}</span>
+          <div v-else class="deadline-edit">
+            <strong>Hạn chót:</strong>
+            <input
+              type="date"
+              v-model="editedDeadline"
+              class="date-picker"
+            />
+          </div>
         </div>
         <!-- <p><strong>ID người dùng:</strong> {{ task.userId }}</p>
         <p><strong>ID của nhóm:</strong> {{ task.groupId }}</p> -->
@@ -120,7 +128,7 @@ import { onMounted, ref, watch, computed } from 'vue'
 import type { Task } from '@/types/task';
 import { useTaskStore } from '@/stores/taskStore.js';
 import { createComment, fetchComments, updateComment, deleteComment } from '@/api/commentApi.js';
-import { updatePercentDone } from '@/api/task.js';
+import { updatePercentDone, updateTask } from '@/api/task.js';
 import WorkProgressOfMenberLayout from '@/components/WorkProgressOfMenberLayout.vue';
 
 interface Comment {
@@ -133,7 +141,14 @@ interface Comment {
 const formatDeadline = (deadline?: string): string => {
   if (!deadline) return 'Không có hạn chót';
   const date = new Date(deadline);
-  return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+  return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+};
+
+// Format date for input field (YYYY-MM-DD)
+const formatDateForInput = (dateString?: string): string => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
 };
 
 const props = defineProps<{
@@ -149,6 +164,7 @@ const emit = defineEmits<{
 
 const isEditing = ref(false);
 const editedTask = ref<Task>({ ...props.task } as Task);
+const editedDeadline = ref('');
 const newComment = ref('');
 const comments = ref<Comment[]>([]);
 const editingCommentId = ref<number | null>(null);
@@ -172,6 +188,7 @@ const sliderStyle = computed(() => {
 watch(() => props.task, async (newTask) => {
   if (newTask) {
     editedTask.value = { ...newTask };
+    editedDeadline.value = formatDateForInput(newTask.deadline);
     try {
       await taskStore.fetchFileForTask(newTask.taskId);
       await loadComments(newTask.taskId);
@@ -190,14 +207,53 @@ const loadComments = async (taskId: number) => {
   }
 };
 
-const toggleEdit = () => {
+const toggleEdit = async () => {
   if (!props.task?.isCreator) {
     return;
   }
 
   if (isEditing.value && editedTask.value) {
-    emit('update-task', editedTask.value);
+    try {
+      // Validate form data
+      if (!editedTask.value.title.trim()) {
+        alert('Tiêu đề không được để trống');
+        return;
+      }
+
+      // Update the deadline from the date picker
+      editedTask.value.deadline = editedDeadline.value;
+
+      // Call the API to update the task
+      const updatedTask = await updateTask(editedTask.value);
+
+      // Update local task data with all fields from API response
+      editedTask.value = { ...editedTask.value, ...updatedTask };
+
+      // Update editedDeadline with the returned deadline
+      editedDeadline.value = formatDateForInput(updatedTask.deadline);
+
+      // Update task in the taskStore if it belongs to a group
+      if (updatedTask.groupId) {
+        await taskStore.updateTask(updatedTask.groupId, updatedTask);
+      }
+
+      // Notify parent component that task was updated with the latest data
+      emit('update-task', updatedTask);
+
+      // Show success message
+      alert('Công việc đã được cập nhật thành công');
+    } catch (error) {
+      console.error('Lỗi khi cập nhật công việc:', error);
+      alert('Không thể cập nhật công việc');
+      // Stay in edit mode if update failed
+      return;
+    }
+  } else {
+    // When entering edit mode, initialize the date picker with current deadline
+    editedDeadline.value = formatDateForInput(editedTask.value.deadline);
   }
+
+  // Toggle edit mode
   isEditing.value = !isEditing.value;
 };
 

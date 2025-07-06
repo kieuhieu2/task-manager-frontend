@@ -27,7 +27,7 @@
             class="list-group"
             :list="list1"
             group="tasks"
-            @change="(event) => log(event, TaskState.TODO)"
+            @change="(event: any) => log(event, TaskState.TODO)"
             itemKey="taskId"
           >
             <template #item="{ element }">
@@ -56,7 +56,7 @@
             class="list-group"
             :list="list2"
             group="tasks"
-            @change="(event) => log(event, TaskState.IN_PROGRESS)"
+            @change="(event: any) => log(event, TaskState.IN_PROGRESS)"
             itemKey="taskId"
           >
             <template #item="{ element }">
@@ -85,7 +85,7 @@
             class="list-group"
             :list="list3"
             group="tasks"
-            @change="(event) => log(event, TaskState.DONE)"
+            @change="(event: any) => log(event, TaskState.DONE)"
             itemKey="taskId"
           >
             <template #item="{ element }">
@@ -110,7 +110,7 @@
             class="list-group"
             :list="list4"
             group="tasks"
-            @change="(event) => log(event, TaskState.SPAM)"
+            @change="(event: any) => log(event, TaskState.SPAM)"
             itemKey="taskId"
           >
             <template #item="{ element }">
@@ -139,7 +139,7 @@
       :task="selectedTask"
       :visible="isTaskDetailsVisible"
       @close="closeTaskDetails"
-      @update-task="updateTaskHandler"
+      @update-task="handleTaskUpdate"
       @delete-task="deleteTaskHandler"
     />
   </div>
@@ -176,9 +176,8 @@ import TaskDetails from '@/components/TaskDetails/TaskDetails.vue';
 import LeftNavbar from '@/components/LeftNavbar.vue';
 import CreateGroupLayout from '@/components/CreateGroupLayout.vue';
 import TaskCreateLayout from '@/components/TaskCreateLayout.vue';
-import { TaskState } from '@/types/task';
-import type { Task } from '@/types/task';
-import { updateTask, deleteTask } from '@/api/task.js';
+import { TaskState, type Task } from '@/types/task';
+import { deleteTask } from '@/api/task.js';
 import { useTaskStore } from "@/stores/taskStore.ts";
 import TaskFilter from '@/components/TaskFilter.vue';
 import TaskDetailMobile from '@/components/Mobile/TaskDetailMobile.vue';
@@ -255,7 +254,7 @@ const {
   refreshTasks,
 } = useTaskManager(groupId);
 
-  onMounted(() => {
+onMounted(() => {
     if (groupId.value !== null) {
       loadTasks();
     } else {
@@ -271,127 +270,136 @@ const {
     }
   });
 
-  const updateTaskHandler = async (updatedTask: Task) => {
-    if (groupId.value === null) {
-      console.error('Group ID is null');
-      return;
-    }
-    await updateTask(updatedTask);
+// Giữ nguyên watch cũ
+watch(groupId, (newGroupId) => {
+  console.log("groupId changed to:", newGroupId);
+  if (newGroupId !== null) {
+    loadTasks();
+  } else {
+    console.error("Group ID không hợp lệ");
+  }
+});
+
+const deleteTaskHandler = async () => {
+  if (selectedTask.value && groupId.value !== null) {
+    await deleteTask(selectedTask.value.taskId);
     await refreshTasks();
-  };
+    closeTaskDetails();
+  }
+};
 
-  const deleteTaskHandler = async () => {
-    if (selectedTask.value && groupId.value !== null) {
-      await deleteTask(selectedTask.value.taskId);
-      await refreshTasks();
-      closeTaskDetails();
-    }
-  };
-  const handleTaskSubmitted = async () => {
-    const currentGroupId = localStorage.getItem('groupId');
-    if (currentGroupId) {
-      await taskStore.refreshTasks(Number(currentGroupId));
-    }
-  };
+const handleTaskSubmitted = async () => {
+  const currentGroupId = localStorage.getItem('groupId');
+  if (currentGroupId) {
+    await taskStore.refreshTasks(Number(currentGroupId));
+  }
+};
 
-  // Hàm để tính toán màu nền dựa trên deadline
-  const getTaskBackgroundColor = (deadline?: string) => {
-    if (!deadline) {
-      return '#ffffff'; // Trắng nếu không có deadline
-    }
-
-    const now = new Date();
-    const deadlineDate = new Date(deadline);
-
-    // Tính số ngày còn lại
-    const timeDiff = deadlineDate.getTime() - now.getTime();
-    const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
-
-    if (daysLeft <= 1) {
-      return '#ffebee';
-    } else if (daysLeft <= 3) {
-      return '#fff3e0'; // Cam nhạt nếu deadline còn 7 ngày hoặc ít hơn
-    } else if (daysLeft <= 7) {
-      return '#ffffff'; // Vàng nhạt nếu deadline còn 14 ngày
-    } else {
-      return '#ffffff'; // Xanh lá nhạt cho các deadline xa hơn
-    }
-  };
-
-  // Định dạng ngày deadline để hiển thị
-  const formatDeadline = (deadline: string) => {
-    try {
-      const date = new Date(deadline);
-      const options: Intl.DateTimeFormatOptions = {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      };
-      return date.toLocaleDateString('vi-VN', options);
-    } catch (error) {
-      console.error('Error formatting deadline:', error);
-      return deadline;
-    }
-  };
-
-  // Filter handling functions
-  interface FilterData {
-    hasDateRange: boolean;
-    fromDate: string;
-    toDate: string;
-    hasDeadline: boolean;
-    deadlineDate: string;
-    currentGroupOnly: boolean;
+// Hàm để tính toán màu nền dựa trên deadline
+const getTaskBackgroundColor = (deadline?: string) => {
+  if (!deadline) {
+    return '#ffffff'; // Trắng nếu không có deadline
   }
 
-  const handleApplyFilters = (filterData: FilterData) => {
-    console.log('TaskManager: Applying filters:', filterData);
+  const now = new Date();
+  const deadlineDate = new Date(deadline);
 
-    // Cập nhật tasksWasFiltered sau khi áp dụng các bộ lọc
-    updateTaskListsFromStore();
-  };
+  // Tính số ngày còn lại
+  const timeDiff = deadlineDate.getTime() - now.getTime();
+  const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
-  const handleClearFilters = () => {
-    console.log('TaskManager: Clearing all filters');
+  if (daysLeft <= 1) {
+    return '#ffebee';
+  } else if (daysLeft <= 3) {
+    return '#fff3e0'; // Cam nhạt nếu deadline còn 7 ngày hoặc ít hơn
+  } else if (daysLeft <= 7) {
+    return '#ffffff'; // Vàng nhạt nếu deadline còn 14 ngày
+  } else {
+    return '#ffffff'; // Xanh lá nhạt cho các deadline xa hơn
+  }
+};
 
-    // Xóa tất cả các bộ lọc trong store
-    taskStore.clearAllFilters();
+// Định dạng ngày deadline để hiển thị
+const formatDeadline = (deadline: string) => {
+  try {
+    const date = new Date(deadline);
+    const options: Intl.DateTimeFormatOptions = {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    };
+    return date.toLocaleDateString('vi-VN', options);
+  } catch (error) {
+    console.error('Error formatting deadline:', error);
+    return deadline;
+  }
+};
 
-    // Cập nhật lại danh sách task hiển thị
-    updateTaskListsFromStore();
-  };
+// Filter handling functions
+interface FilterData {
+  hasDateRange: boolean;
+  fromDate: string;
+  toDate: string;
+  hasDeadline: boolean;
+  deadlineDate: string;
+  currentGroupOnly: boolean;
+}
 
-  // Cập nhật danh sách task từ store
-  const updateTaskListsFromStore = () => {
-    // Sử dụng mảng tasksWasFiltered từ store sau khi đã được lọc
-    if (taskStore.tasksWasFiltered && taskStore.tasksWasFiltered.length > 0) {
-      console.log('Updating task lists from tasksWasFiltered', taskStore.tasksWasFiltered.length);
+const handleApplyFilters = (filterData: FilterData) => {
+  console.log('TaskManager: Applying filters:', filterData);
 
-      // Tạo danh sách theo trạng thái
-      const todoTasks = taskStore.tasksWasFiltered.filter(task => task.state === TaskState.TODO);
-      const inProgressTasks = taskStore.tasksWasFiltered.filter(task => task.state === TaskState.IN_PROGRESS);
-      const doneTasks = taskStore.tasksWasFiltered.filter(task => task.state === TaskState.DONE);
-      const spamTasks = taskStore.tasksWasFiltered.filter(task => task.state === TaskState.SPAM);
+  // Cập nhật tasksWasFiltered sau khi áp dụng các bộ lọc
+  updateTaskListsFromStore();
+};
 
-      // Cập nhật danh sách task hiển thị
-      list1.value.splice(0, list1.value.length, ...todoTasks);
-      list2.value.splice(0, list2.value.length, ...inProgressTasks);
-      list3.value.splice(0, list3.value.length, ...doneTasks);
-      list4.value.splice(0, list4.value.length, ...spamTasks);
-    } else if (groupId.value !== null) {
-      // Nếu không có task nào được lọc, hiển thị tất cả task của group hiện tại
-      const allTasksInGroup = taskStore.getTasksForGroup(groupId.value);
-      const todoTasks = allTasksInGroup.filter(task => task.state === TaskState.TODO);
-      const inProgressTasks = allTasksInGroup.filter(task => task.state === TaskState.IN_PROGRESS);
-      const doneTasks = allTasksInGroup.filter(task => task.state === TaskState.DONE);
-      const spamTasks = allTasksInGroup.filter(task => task.state === TaskState.SPAM);
+const handleClearFilters = () => {
+  console.log('TaskManager: Clearing all filters');
 
-      list1.value.splice(0, list1.value.length, ...todoTasks);
-      list2.value.splice(0, list2.value.length, ...inProgressTasks);
-      list3.value.splice(0, list3.value.length, ...doneTasks);
-      list4.value.splice(0, list4.value.length, ...spamTasks);
-    }
-  };
+  // Xóa tất cả các bộ lọc trong store
+  taskStore.clearAllFilters();
+
+  // Cập nhật lại danh sách task hiển thị
+  updateTaskListsFromStore();
+};
+
+// Cập nhật danh sách task từ store
+const updateTaskListsFromStore = () => {
+  // Sử dụng mảng tasksWasFiltered từ store sau khi đã được lọc
+  if (taskStore.tasksWasFiltered && taskStore.tasksWasFiltered.length > 0) {
+    console.log('Updating task lists from tasksWasFiltered', taskStore.tasksWasFiltered.length);
+
+    // Tạo danh sách theo trạng thái
+    const todoTasks = taskStore.tasksWasFiltered.filter(task => task.state === TaskState.TODO);
+    const inProgressTasks = taskStore.tasksWasFiltered.filter(task => task.state === TaskState.IN_PROGRESS);
+    const doneTasks = taskStore.tasksWasFiltered.filter(task => task.state === TaskState.DONE);
+    const spamTasks = taskStore.tasksWasFiltered.filter(task => task.state === TaskState.SPAM);
+
+    // Cập nhật danh sách task hiển thị
+    list1.value.splice(0, list1.value.length, ...todoTasks);
+    list2.value.splice(0, list2.value.length, ...inProgressTasks);
+    list3.value.splice(0, list3.value.length, ...doneTasks);
+    list4.value.splice(0, list4.value.length, ...spamTasks);
+  } else if (groupId.value !== null) {
+    // Nếu không có task nào được lọc, hiển thị tất cả task của group hiện tại
+    const allTasksInGroup = taskStore.getTasksForGroup(groupId.value);
+    const todoTasks = allTasksInGroup.filter(task => task.state === TaskState.TODO);
+    const inProgressTasks = allTasksInGroup.filter(task => task.state === TaskState.IN_PROGRESS);
+    const doneTasks = allTasksInGroup.filter(task => task.state === TaskState.DONE);
+    const spamTasks = allTasksInGroup.filter(task => task.state === TaskState.SPAM);
+
+    list1.value.splice(0, list1.value.length, ...todoTasks);
+    list2.value.splice(0, list2.value.length, ...inProgressTasks);
+    list3.value.splice(0, list3.value.length, ...doneTasks);
+    list4.value.splice(0, list4.value.length, ...spamTasks);
+  }
+};
+
+const handleTaskUpdate = async (updatedTask: Task) => {
+  if (selectedTask.value && groupId.value !== null) {
+    await taskStore.updateTask(groupId.value, updatedTask);
+    await refreshTasks();
+  }
+};
 </script>
 
 <style scoped lang="scss">
@@ -535,13 +543,13 @@ h3 {
   position: relative;
 }
 
-.task-manager-container {
-  padding-top: 10px; /* Add some space from the filter bar */
-}
-
 .filter-container {
   display: flex;
   justify-content: flex-end;
-  padding: 0 20px;
+  padding-right: 25px;
+  position: sticky;
+  top: 60px; /* Adjust based on your header height */
+  background-color: #fff;
+  z-index: 9;
 }
 </style>

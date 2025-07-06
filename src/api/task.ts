@@ -1,6 +1,6 @@
 import type { Task } from '@/types/task.js'
 import type { ApiResponse } from '@/types/api.js'
-import { get, put } from './axiosInstance.js'
+import { get } from './axiosInstance.js'
 import axiosInstance from './axiosInstance.js';
 
 export async function createTask(formData: FormData): Promise<Task> {
@@ -75,21 +75,42 @@ export async function updateTaskState(taskId: number, newState: string, position
 }
 
 export async function deleteTask(taskId: number): Promise<string> {
-  return 'task was deleted'
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.delete(`/tasks/${taskId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return response.data.message || 'Task đã được xóa';
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(err.response?.data?.message || 'Không thể xóa task');
+  }
 }
 
 export async function updateTask(editedTask: Task): Promise<Task> {
-  return {
-    taskId: editedTask.taskId,
-    title: editedTask.title,
-    description: editedTask.description,
-    percentDone: editedTask.percentDone,
-    userId: editedTask.userId,
-    groupId: editedTask.groupId,
-    state: editedTask.state,
-    fileUrl: editedTask.fileUrl,
-    fileType: editedTask.fileType,
-    positionInColumn: editedTask.positionInColumn
+  try {
+    const token = localStorage.getItem('token');
+    const response = await axiosInstance.put('/tasks',
+      {
+        taskId: editedTask.taskId,
+        title: editedTask.title,
+        description: editedTask.description,
+        deadline: editedTask.deadline
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    return response.data.result;
+  } catch (error: unknown) {
+    const err = error as { response?: { data?: { message?: string } } };
+    throw new Error(err.response?.data?.message || 'Không thể cập nhật task');
   }
 }
 

@@ -113,6 +113,8 @@ import { defineComponent, ref } from 'vue';
 import { useLogin } from '@/composables/useLogin.js'
 import axios from 'axios'
 
+const baseUrl = import.meta.env.VITE_BASE_URL;
+
 export default defineComponent({
   name: 'LoginForm',
   setup() {
@@ -157,7 +159,7 @@ export default defineComponent({
         isRequestingOTP.value = true;
         forgotPasswordError.value = '';
 
-        const checkUserResponse = await axios.get(`http://localhost:8080/users/check/${usernameInput.value}`);
+        const checkUserResponse = await axios.get(`${baseUrl}/users/check/${usernameInput.value}`);
 
         if (checkUserResponse.data.code === 1000) {
           forgotPasswordForm.value.userCode = checkUserResponse.data.result;
@@ -168,7 +170,7 @@ export default defineComponent({
         }
 
         try {
-          await axios.post('http://localhost:8080/auth/password-reset-request', {
+          await axios.post(`${baseUrl}/auth/password-reset-request`, {
             userCode: forgotPasswordForm.value.userCode
           });
         } catch (error) {
@@ -188,12 +190,11 @@ export default defineComponent({
         forgotPasswordError.value = 'Vui lòng nhập đầy đủ thông tin';
         return;
       }
-
       try {
         isResettingPassword.value = true;
         forgotPasswordError.value = '';
 
-        await axios.post('http://localhost:8080/auth/forget-password', {
+        await axios.post(`${baseUrl}/auth/forget-password`, {
           userCode: forgotPasswordForm.value.userCode,
           otpCode: forgotPasswordForm.value.otpCode,
           newPassword: forgotPasswordForm.value.newPassword
