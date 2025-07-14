@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { fetchComments, createComment, updateComment, deleteComment } from '../api/commentApi.ts';
+import { fetchComments, createComment, updateComment, deleteComment, addFileByCommentId } from '../api/commentApi.ts';
 import type { Comment } from '../types/comment.ts';
 
 export const useCommentsStore = defineStore('comments', {
@@ -90,6 +90,30 @@ export const useCommentsStore = defineStore('comments', {
         throw error
       } finally {
         this.loading = false
+      }
+    },
+
+    async addFileByCommentId(formData: FormData) {
+      this.loading = true;
+      this.error = null;
+      try {
+        await addFileByCommentId(formData);
+
+        // Get the taskId from formData to reload comments
+        const taskId = formData.get('taskId');
+        if (taskId) {
+          await this.fetchComments(Number(taskId));
+        }
+      } catch (error: unknown) {
+        if (error instanceof Error && 'response' in error) {
+          const responseError = error as { response?: { data?: { message?: string } } };
+          this.error = responseError.response?.data?.message || 'Không thể tạo bình luận với tệp đính kèm';
+        } else {
+          this.error = 'Không thể tạo bình luận với tệp đính kèm';
+        }
+        throw error;
+      } finally {
+        this.loading = false;
       }
     },
   },

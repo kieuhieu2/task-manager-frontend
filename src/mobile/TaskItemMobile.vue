@@ -76,7 +76,7 @@
 
         <div class="detail-row">
           <strong>Trạng thái:</strong>
-          <span>{{ storeTask.state }}</span>
+          <span>{{ getStatusLabel(storeTask.state) }}</span>
         </div>
 
         <div v-if="taskStore.selectedTaskFile" class="detail-row">
@@ -129,8 +129,20 @@
         </div>
 
         <div class="comment-input">
+          <div class="attachment-icon">
+            <Icon icon="lucide:paperclip" width="20" height="20" @click="triggerFileInput" />
+            <input
+              type="file"
+              ref="commentFileInput"
+              style="display: none"
+              @change="handleCommentFileChange"
+            />
+            <span v-if="commentFile" class="file-badge">1</span>
+          </div>
           <input v-model="newComment" type="text" placeholder="Nhập ghi chú..." />
-          <button @click="submitComment">Gửi</button>
+          <button @click="submitComment">
+            <Icon icon="lucide:send" width="20" height="20" />
+          </button>
         </div>
       </div>
 
@@ -141,8 +153,49 @@
           Xóa công việc
         </button>
         <button v-if="storeTask.isCreator" @click="toggleEdit" class="edit-btn">
-          <Icon icon="lucide:edit" width="16" height="16" />
+          <!-- <Icon icon="lucide:edit" width="16" height="16" /> -->
           {{ isEditing ? "Lưu" : "Sửa công việc" }}
+        </button>
+        <button @click="toggleStatusSelector" class="status-btn">
+          <Icon icon="lucide:refresh-cw" width="16" height="16" />
+          Chuyển trạng thái
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status selection overlay -->
+  <div class="status-overlay" v-if="showStatusSelector" @click="closeStatusSelector">
+    <div class="status-selector" @click.stop>
+      <h3>Chọn trạng thái</h3>
+      <div class="status-options">
+        <button
+          class="status-option"
+          :class="{ active: storeTask.state === TaskState.TODO }"
+          @click="changeStatus(TaskState.TODO)"
+        >
+          Cần làm
+        </button>
+        <button
+          class="status-option"
+          :class="{ active: storeTask.state === TaskState.IN_PROGRESS }"
+          @click="changeStatus(TaskState.IN_PROGRESS)"
+        >
+          Đang làm
+        </button>
+        <button
+          class="status-option"
+          :class="{ active: storeTask.state === TaskState.DONE }"
+          @click="changeStatus(TaskState.DONE)"
+        >
+          Đã xong
+        </button>
+        <button
+          class="status-option"
+          :class="{ active: storeTask.state === TaskState.SPAM }"
+          @click="changeStatus(TaskState.SPAM)"
+        >
+          Rác
         </button>
       </div>
     </div>
@@ -152,10 +205,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import { Icon } from '@iconify/vue';
-import { useTaskStore } from '@/stores/taskStore';
-import { useCommentsStore } from '@/stores/commentStore';
-import { updatePercentDone } from '@/api/task';
-import type { Task } from '@/types/task';
+import { useTaskStore } from '@/stores/taskStore.js';
+import { useCommentsStore } from '@/stores/commentStore.js';
+import { updatePercentDone, updateTaskState } from '@/api/task.js';
+import type { Task } from '@/types/task.js';
+import { TaskState } from '@/types/task.js';
 
 // Props and emits
 const props = defineProps<{
@@ -181,6 +235,10 @@ const userCode = ref(localStorage.getItem('userCode') || '');
 const isEditing = ref(false);
 const editedTask = ref<Task>({} as Task);
 const selectedFile = ref<File | null>(null);
+const commentFile = ref<File | null>(null);
+const commentFileInput = ref<HTMLInputElement | null>(null);
+const showStatusSelector = ref(false);
+const isChangingStatus = ref(false);
 
 // Get the task from store to ensure we have the latest data
 const storeTask = computed(() => {
@@ -248,6 +306,64 @@ const daysUntilDeadline = computed(() => {
 
   return differenceInDays;
 });
+
+// Get display label for task status
+const getStatusLabel = (state: string): string => {
+  switch(state) {
+    case TaskState.TODO:
+      return 'Cần làm';
+    case TaskState.IN_PROGRESS:
+      return 'Đang làm';
+    case TaskState.DONE:
+      return 'Đã xong';
+    case TaskState.SPAM:
+      return 'Rác';
+    default:
+      return state;
+  }
+};
+
+// Toggle status selector overlay
+const toggleStatusSelector = () => {
+  showStatusSelector.value = !showStatusSelector.value;
+};
+
+// Close status selector overlay
+const closeStatusSelector = () => {
+  showStatusSelector.value = false;
+};
+
+// Change task status
+const changeStatus = async (newState: TaskState) => {
+  if (isChangingStatus.value || storeTask.value.state === newState) {
+    return;
+  }
+
+  isChangingStatus.value = true;
+  try {
+    // Call API to update task state
+    await updateTaskState(storeTask.value.taskId, newState, 1);
+
+    // Create updated task object with new state
+    const updatedTask = {
+      ...storeTask.value,
+      state: newState
+    };
+
+    // Update local state and emit to parent
+    emit('update-task', updatedTask);
+
+    // Refresh tasks list from server to get updated data
+    await taskStore.refreshTasks(storeTask.value.groupId);
+
+    // Close the status selector
+    closeStatusSelector();
+  } catch (error) {
+    console.error('Error changing task status:', error);
+  } finally {
+    isChangingStatus.value = false;
+  }
+};
 
 // Determine background color based on days left
 const backgroundColorBasedOnDeadline = computed(() => {
@@ -341,15 +457,46 @@ const downloadFile = () => {
 
 // Comment functions
 const submitComment = async () => {
-  if (!newComment.value.trim()) return;
+  if (!newComment.value.trim() && !commentFile.value) return;
 
   try {
-    // Update commentStore.ts to include this action if not already there
-    await commentStore.createComment(props.task.taskId, newComment.value);
+    if (commentFile.value) {
+      // Call API to add file with comment
+      const formData = new FormData();
+      formData.append('taskId', props.task.taskId.toString());
+      formData.append('commentText', newComment.value);
+      formData.append('file', commentFile.value);
+
+      // TODO: Replace with actual API call
+      // await commentStore.addFileByCommnentId(formData);
+      console.log('Adding comment with file:', formData);
+    } else {
+      // Use existing API for text-only comments
+      await commentStore.createComment(props.task.taskId, newComment.value);
+    }
+
+    // Reset form
     newComment.value = '';
-    await loadComments(props.task.taskId);
+    commentFile.value = null;
+
+    // Comments are already reloaded by the store actions
   } catch (error) {
     console.error('Error submitting comment:', error);
+  }
+};
+
+// Trigger file input click
+const triggerFileInput = () => {
+  if (commentFileInput.value) {
+    commentFileInput.value.click();
+  }
+};
+
+// Handle file selection for comments
+const handleCommentFileChange = (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  if (input.files && input.files.length > 0) {
+    commentFile.value = input.files[0];
   }
 };
 
@@ -743,47 +890,96 @@ onMounted(async () => {
 
 .comment-input {
   display: flex;
+  align-items: center;
   gap: 10px;
   margin-top: 10px;
+  background-color: #f5f5f5;
+  border-radius: 24px;
+  padding: 4px 8px;
+  position: relative;
+}
+
+.attachment-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  color: #666;
+  padding: 8px;
+  cursor: pointer;
+}
+
+.file-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: #ff4081;
+  color: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .comment-input input {
   flex: 1;
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  padding: 8px 12px;
+  border: none;
+  background-color: transparent;
   font-size: 14px;
+  outline: none;
 }
 
 .comment-input button {
-  background-color: #4CAF50;
-  color: white;
+  background: none;
   border: none;
-  padding: 0 15px;
-  border-radius: 6px;
-  font-size: 14px;
+  color: #4CAF50;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.comment-input button:hover {
+  background-color: rgba(76, 175, 80, 0.1);
 }
 
 /* Action buttons */
 .action-buttons {
   display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
+  flex-wrap: wrap;
   gap: 10px;
+  margin-top: 20px;
 }
 
 .action-buttons button {
   flex: 1;
+  min-width: calc(50% - 5px); /* Half width minus half of the gap */
   padding: 10px;
   border: none;
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.action-buttons button:only-child {
+  flex-basis: 100%; /* Take full width if it's the only button */
+}
+
+.delete-btn {
+  background-color: #f44336;
+  color: white;
 }
 
 .edit-btn {
@@ -791,9 +987,14 @@ onMounted(async () => {
   color: white;
 }
 
-.delete-btn {
-  background-color: #f44336;
+.status-btn {
+  background-color: #4CAF50;
   color: white;
+  flex-basis: 100%; /* This button always takes full width regardless of siblings */
+}
+
+.action-buttons button svg {
+  margin-right: 6px;
 }
 
 .edit-controls {
@@ -856,5 +1057,67 @@ onMounted(async () => {
 .file-input {
   width: 100%;
   margin-top: 8px;
+}
+
+/* Status selection overlay */
+.status-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.status-selector {
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  width: 90%;
+  max-width: 350px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.status-selector h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 18px;
+  color: #333;
+}
+
+.status-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.status-option {
+  padding: 12px 15px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  font-size: 16px;
+  color: #333;
+  background-color: #f9f9f9;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.status-option:hover {
+  background-color: #f0f0f0;
+  border-color: #ddd;
+}
+
+.status-option.active {
+  background-color: #e8f5e9;
+  border-color: #28a745;
+  color: #28a745;
+  font-weight: 600;
 }
 </style>

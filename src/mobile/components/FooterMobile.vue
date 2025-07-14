@@ -33,7 +33,7 @@ import { ref, onMounted, computed } from 'vue';
 import { Icon } from '@iconify/vue';
 import { useRouter, useRoute } from 'vue-router';
 import NotificationOverlay from './NotificationOverlay.vue';
-import { useNotificationStore } from '@/stores/notificationStore';
+import { useNotificationStore } from '@/stores/notificationStore.js';
 
 // Make it a different name to avoid conflicts with our computed property
 defineProps<{

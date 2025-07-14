@@ -157,7 +157,6 @@ export const getFileOfTask = async (taskId: number): Promise<{ fileUrl: string; 
       fileName: filename,
     };
   } catch (error) {
-    console.error('Error fetching file for task:', error);
     throw error;
   }
 };

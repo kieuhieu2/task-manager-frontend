@@ -73,3 +73,21 @@ export async function deleteComment(commentId: number): Promise<void> {
     throw new Error('Không thể xóa bình luận');
   }
 }
+
+export async function addFileByCommentId(formData: FormData): Promise<Comment> {
+  try {
+    const response = await axiosInstance.post('/comments/add-file', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+
+    return response.data.result;
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Không thể tạo bình luận với tệp đính kèm');
+  }
+}

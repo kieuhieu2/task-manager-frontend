@@ -60,7 +60,7 @@ import { updateGroup, deleteGroup } from '@/api/GroupsApi.js'
 import type { Group } from '@/types/group.js'
 import { useGetMyGroupsStore } from '@/stores/groupsStore.js'
 import { useRouter } from 'vue-router'
-import GetMyGroupsMobile from '@/components/Mobile/GetMyGroupsMobile.vue'
+import GetMyGroupsMobile from '@/mobile/GetMyGroupsMobile.vue'
 
 const { groups, fetchGroups } = useGetMyGroups();
 const router = useRouter();
@@ -73,7 +73,7 @@ const showMembersModal = ref(false);
 const selectedGroupId = ref<number>(0);
 const selectedGroupIsLeader = ref(false);
 
-// Mobile detection
+// mobile detection
 const isMobileView = ref(false);
 const checkIfMobile = () => {
   isMobileView.value = window.innerWidth <= 768; // Common breakpoint for mobile

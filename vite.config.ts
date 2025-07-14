@@ -11,7 +11,7 @@ export default defineConfig({
   plugins: [
     vue(),
     vueJsx(),
-    vueDevTools(),
+    // vueDevTools(), // Tạm thời tắt Vue DevTools
     tailwindcss(),
   ],
   resolve: {

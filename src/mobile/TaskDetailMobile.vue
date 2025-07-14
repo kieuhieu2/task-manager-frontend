@@ -3,7 +3,7 @@
     <!-- Use the extracted HeaderMobile component -->
     <HeaderMobile />
 
-    <!-- Mobile menu overlay -->
+    <!-- mobile menu overlay -->
     <div v-if="menuVisible" class="mobile-menu-overlay" @click="closeMenu">
       <div class="mobile-menu-panel" @click.stop>
         <div class="close-button" @click="closeMenu">
@@ -199,12 +199,12 @@ import { ref, computed, onMounted } from 'vue';
 import { useTaskManager } from '@/composables/uesTaskManager.js';
 import { useRoute, useRouter } from 'vue-router';
 import { Icon } from '@iconify/vue';
-import { useNotificationStore } from '@/stores/notificationStore';
-import { useUserStore } from '@/stores/userStore';
-import TaskItemMobile from '@/components/Mobile/taskItemMobile.vue';
-import HeaderMobile from '@/components/Mobile/components/HeaderMobile.vue';
-import FooterMobile from '@/components/Mobile/components/FooterMobile.vue';
-import type { Task } from '@/types/task';
+import { useNotificationStore } from '@/stores/notificationStore.js';
+import { useUserStore } from '@/stores/userStore.js';
+import TaskItemMobile from '@/mobile/TaskItemMobile.vue';
+import HeaderMobile from '@/mobile/components/HeaderMobile.vue';
+import FooterMobile from '@/mobile/components/FooterMobile.vue';
+import type { Task } from '@/types/task.js';
 
 const route = useRoute();
 const router = useRouter();
@@ -333,17 +333,17 @@ const {
 // Task handlers
 const handleUpdateTask = (task: Task) => {
   // Implement update task action
-  console.log('Update task:', task);
+  // console.log('Update task:', task);
 };
 
 const handleDeleteTask = (task: Task) => {
   // Implement delete task action
-  console.log('Delete task:', task);
+  // console.log('Delete task:', task);
 };
 
 const handleEditTask = (task: Task) => {
   // Implement edit task action
-  console.log('Edit task:', task);
+  // console.log('Edit task:', task);
 };
 
 const formatNotificationTime = (timestamp: string) => {
@@ -383,7 +383,7 @@ const formatNotificationTime = (timestamp: string) => {
 
 /* Remove the header styles that were moved to HeaderMobile.vue */
 
-/* Mobile Menu Overlay */
+/* mobile Menu Overlay */
 .mobile-menu-overlay {
   position: fixed;
   top: 0;

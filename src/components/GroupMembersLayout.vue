@@ -1,130 +1,139 @@
 <template>
-  <div class="modal-overlay">
-    <div class="group-members-layout">
-      <button class="close-button" @click="emitClose">[x]</button>
-      <h2>Thành viên của nhóm</h2>
+  <div>
+    <div v-if="!isMobile" class="modal-overlay">
+      <div class="group-members-layout">
+        <button class="close-button" @click="emitClose">[x]</button>
+        <h2>Thành viên của nhóm</h2>
 
-      <p v-if="error" class="error">{{ error }}</p>
+        <p v-if="error" class="error">{{ error }}</p>
 
-      <div class="search-container">
-        <input
-          v-model="searchTerm"
-          type="text"
-          placeholder="Nhập mã hoặc tên người dùng..."
-          class="search-input"
-        />
-        <button @click="searchUsers" class="search-button">Tìm kiếm</button>
-      </div>
-
-      <div class="tabs">
-        <button
-          :class="['tab-button', { active: activeTab === 'members' }]"
-          @click="activeTab = 'members'"
-        >
-          Thành viên
-        </button>
-        <button
-          :class="['tab-button', { active: activeTab === 'leaders' }]"
-          @click="activeTab = 'leaders'"
-        >
-          Trưởng nhóm
-        </button>
-      </div>
-
-      <div v-if="activeTab === 'members'" class="table-container">
-
-        <div v-if="currentUserIsLeader" class="add-member-form">
+        <div class="search-container">
           <input
-            v-model="newMemberCode"
+            v-model="searchTerm"
             type="text"
-            placeholder="Nhập mã người dùng"
+            placeholder="Nhập mã hoặc tên người dùng..."
             class="search-input"
           />
-          <button @click="addMember" class="add-button">Thêm thành viên</button>
+          <button @click="searchUsers" class="search-button">Tìm kiếm</button>
         </div>
-        <p v-if="addMemberMessage" class="member-message" :class="{ 'member-error': addMemberError }">
-          {{ addMemberMessage }}
-        </p>
 
-        <table class="members-table">
-          <thead>
-            <tr>
-              <th>Mã số</th>
-              <th>Họ và tên</th>
-              <th>Hành động</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="member in members" :key="member.userCode">
-              <td>{{ member.userCode }}</td>
-              <td>{{ member.firstName }} {{ member.lastName }}</td>
-              <td class="actions">
-                <button
-                  v-if="currentUserIsLeader"
-                  @click="confirmRemoveMember(member)"
-                  class="remove-button"
-                >
-                  Xóa
-                </button>
-              </td>
-            </tr>
-            <tr v-if="members.length === 0">
-              <td colspan="3" class="no-data">Không có thành viên nào</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div v-if="activeTab === 'leaders'" class="table-container">
-        <div v-if="currentUserIsLeader" class="add-member-form">
-          <input
-            v-model="newLeaderCode"
-            type="text"
-            placeholder="Nhập mã người dùng"
-            class="search-input"
-          />
-          <button @click="addLeader" class="add-button">Thêm trưởng nhóm</button>
+        <div class="tabs">
+          <button
+            :class="['tab-button', { active: activeTab === 'members' }]"
+            @click="activeTab = 'members'"
+          >
+            Thành viên
+          </button>
+          <button
+            :class="['tab-button', { active: activeTab === 'leaders' }]"
+            @click="activeTab = 'leaders'"
+          >
+            Trưởng nhóm
+          </button>
         </div>
-        <p v-if="addLeaderMessage" class="member-message" :class="{ 'member-error': addLeaderError }">
-          {{ addLeaderMessage }}
-        </p>
 
-        <table class="leaders-table">
-          <thead>
-            <tr>
-              <th>Mã số</th>
-              <th>Họ và tên</th>
-              <th>Hành động</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="leader in leaders" :key="leader.userCode">
-              <td>{{ leader.userCode }}</td>
-              <td>{{ leader.firstName }} {{ leader.lastName }}</td>
-              <td class="actions">
-                <button
-                  v-if="currentUserCode === leader.userCode"
-                  @click="confirmRemoveLeader(leader)"
-                  class="remove-button"
-                >
-                  Xóa
-                </button>
-              </td>
-            </tr>
-            <tr v-if="leaders.length === 0">
-              <td colspan="3" class="no-data">Không có trưởng nhóm nào</td>
-            </tr>
-          </tbody>
-        </table>
+        <div v-if="activeTab === 'members'" class="table-container">
+
+          <div v-if="currentUserIsLeader" class="add-member-form">
+            <input
+              v-model="newMemberCode"
+              type="text"
+              placeholder="Nhập mã người dùng"
+              class="search-input"
+            />
+            <button @click="addMember" class="add-button">Thêm thành viên</button>
+          </div>
+          <p v-if="addMemberMessage" class="member-message" :class="{ 'member-error': addMemberError }">
+            {{ addMemberMessage }}
+          </p>
+
+          <table class="members-table">
+            <thead>
+              <tr>
+                <th>Mã số</th>
+                <th>Họ và tên</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="member in members" :key="member.userCode">
+                <td>{{ member.userCode }}</td>
+                <td>{{ member.firstName }} {{ member.lastName }}</td>
+                <td class="actions">
+                  <button
+                    v-if="currentUserIsLeader"
+                    @click="confirmRemoveMember(member)"
+                    class="remove-button"
+                  >
+                    Xóa
+                  </button>
+                </td>
+              </tr>
+              <tr v-if="members.length === 0">
+                <td colspan="3" class="no-data">Không có thành viên nào</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div v-if="activeTab === 'leaders'" class="table-container">
+          <div v-if="currentUserIsLeader" class="add-member-form">
+            <input
+              v-model="newLeaderCode"
+              type="text"
+              placeholder="Nhập mã người dùng"
+              class="search-input"
+            />
+            <button @click="addLeader" class="add-button">Thêm trưởng nhóm</button>
+          </div>
+          <p v-if="addLeaderMessage" class="member-message" :class="{ 'member-error': addLeaderError }">
+            {{ addLeaderMessage }}
+          </p>
+
+          <table class="leaders-table">
+            <thead>
+              <tr>
+                <th>Mã số</th>
+                <th>Họ và tên</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="leader in leaders" :key="leader.userCode">
+                <td>{{ leader.userCode }}</td>
+                <td>{{ leader.firstName }} {{ leader.lastName }}</td>
+                <td class="actions">
+                  <button
+                    v-if="currentUserCode === leader.userCode"
+                    @click="confirmRemoveLeader(leader)"
+                    class="remove-button"
+                  >
+                    Xóa
+                  </button>
+                </td>
+              </tr>
+              <tr v-if="leaders.length === 0">
+                <td colspan="3" class="no-data">Không có trưởng nhóm nào</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
+    <GroupMemberLayoutMobile
+      v-else
+      :groupId="groupId"
+      :isLeader="isLeader"
+      @close="emitClose"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, defineProps, defineEmits } from 'vue'
+import { ref, onMounted, defineProps, defineEmits, onBeforeMount, onBeforeUnmount } from 'vue'
 import { getGroupMembers, addUserToGroup, removeUserFromGroup } from '@/api/GroupsApi'
 import type { GroupMember } from '@/types/group'
+import GroupMemberLayoutMobile from '@/mobile/components/GroupMemberLayoutMobile.vue'
 
 const props = defineProps<{
   groupId: number
@@ -147,6 +156,20 @@ const addMemberError = ref(false)
 const newLeaderCode = ref('')
 const addLeaderMessage = ref('')
 const addLeaderError = ref(false)
+const isMobile = ref(false)
+
+const checkIfMobile = () => {
+  isMobile.value = window.innerWidth < 768
+}
+
+onBeforeMount(() => {
+  checkIfMobile()
+  window.addEventListener('resize', checkIfMobile)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', checkIfMobile)
+})
 
 const fetchMembers = async () => {
   try {

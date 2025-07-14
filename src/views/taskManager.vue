@@ -144,7 +144,7 @@
     />
   </div>
 
-  <!-- Mobile view -->
+  <!-- mobile view -->
   <div v-else class="mobile-view">
     <TaskDetailMobile />
   </div>
@@ -180,7 +180,7 @@ import { TaskState, type Task } from '@/types/task';
 import { deleteTask } from '@/api/task.js';
 import { useTaskStore } from "@/stores/taskStore.ts";
 import TaskFilter from '@/components/TaskFilter.vue';
-import TaskDetailMobile from '@/components/Mobile/TaskDetailMobile.vue';
+import TaskDetailMobile from '@/mobile/TaskDetailMobile.vue';
 
 const route = useRoute();
 const taskStore = useTaskStore();
@@ -403,7 +403,7 @@ const handleTaskUpdate = async (updatedTask: Task) => {
 </script>
 
 <style scoped lang="scss">
-/* Mobile/Desktop View Styles */
+/* mobile/Desktop View Styles */
 @media screen and (max-width: 768px) {
   .desktop-view {
     display: none;

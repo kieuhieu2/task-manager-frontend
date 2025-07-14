@@ -150,7 +150,6 @@ export const useTaskStore = defineStore('taskStore', () => {
       };
       console.log('File fetched successfully:', selectedTaskFile.value);
     } catch (error) {
-      console.error('Error fetching file for task:', error);
       selectedTaskFile.value = null;
     }
   };

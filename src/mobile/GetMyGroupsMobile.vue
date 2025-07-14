@@ -44,13 +44,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import HeaderMobile from '@/components/Mobile/components/HeaderMobile.vue';
-import FooterMobile from '@/components/Mobile/components/FooterMobile.vue';
-import GroupItem from '@/components/Mobile/components/GroupItem.vue';
+import HeaderMobile from '@/mobile/components/HeaderMobile.vue';
+import FooterMobile from '@/mobile/components/FooterMobile.vue';
+import GroupItem from '@/mobile/components/GroupItem.vue';
 import GroupMembersLayout from '@/components/GroupMembersLayout.vue';
 import { useGetMyGroups } from '@/composables/useGetMyGroups.js';
 import { updateGroup, deleteGroup } from '@/api/GroupsApi.js';
-import { useNotificationStore } from '@/stores/notificationStore';
+import { useNotificationStore } from '@/stores/notificationStore.js';
 import type { Group } from '@/types/group.js';
 
 const router = useRouter();
