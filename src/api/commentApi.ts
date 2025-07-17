@@ -18,19 +18,35 @@ export async function fetchComments(taskId: number): Promise<Comment[] | undefin
     }
 }
 
-export async function createComment(taskId: number, commentText: string): Promise<Comment> {
+export async function createComment(taskId: number, commentText: string, commentFile?: File): Promise<Comment> {
     try {
-        const res = await axiosInstance.post(
-            `/comments`,
-            { taskId, commentText },
-            {
+        if (commentFile) {
+            const formData = new FormData();
+            formData.append('taskId', taskId.toString());
+            formData.append('commentText', commentText);
+            formData.append('commentFile', commentFile);
+
+            const res = await axiosInstance.post('/comments', formData, {
                 headers: {
+                    'Content-Type': 'multipart/form-data',
                     Authorization: `Bearer ${localStorage.getItem('token')}`,
                 },
-            },
-        );
+            });
 
-        return res.data.result;
+            return res.data.result;
+        } else {
+            const res = await axiosInstance.post(
+                `/comments`,
+                { taskId, commentText },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    },
+                },
+            );
+
+            return res.data.result;
+        }
     } catch (error: unknown) {
         if (error instanceof Error) {
             throw error;
@@ -74,20 +90,37 @@ export async function deleteComment(commentId: number): Promise<void> {
   }
 }
 
-export async function addFileByCommentId(formData: FormData): Promise<Comment> {
+export async function getCommentFile(taskId: number, commentId: number): Promise<{ fileUrl: string; fileType?: string; fileName?: string }> {
   try {
-    const response = await axiosInstance.post('/comments/add-file', formData, {
+
+    const response = await axiosInstance.get(`/comments/file/${taskId}/${commentId}`, {
       headers: {
-        'Content-Type': 'multipart/form-data',
         Authorization: `Bearer ${localStorage.getItem('token')}`,
       },
+      responseType: 'blob',
     });
 
-    return response.data.result;
+    const contentDisposition = response.headers['content-disposition'];
+    const filenameMatch = contentDisposition && contentDisposition.match(/filename="(.+?)"/);
+    const filename = filenameMatch ? filenameMatch[1] : `downloaded_file`;
+
+    // Extract the file type from the filename
+    const fileType = filename.split('.').pop() || 'unknown';
+
+    // Create a Blob URL for the file
+    const fileUrl = URL.createObjectURL(response.data);
+
+    return {
+      fileUrl,
+      fileType,
+      fileName: filename,
+    };
+
   } catch (error: unknown) {
+    console.error('Error in getCommentFile API:', error);
     if (error instanceof Error) {
       throw error;
     }
-    throw new Error('Không thể tạo bình luận với tệp đính kèm');
+    throw new Error('Không thể tải file đính kèm');
   }
 }

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { fetchComments, createComment, updateComment, deleteComment, addFileByCommentId } from '../api/commentApi.ts';
+import { fetchComments, createComment, updateComment, deleteComment, getCommentFile } from '../api/commentApi.ts';
 import type { Comment } from '../types/comment.ts';
 
 export const useCommentsStore = defineStore('comments', {
@@ -7,13 +7,35 @@ export const useCommentsStore = defineStore('comments', {
     comments: [] as Comment[] | undefined,
     loading: false,
     error: null as string | null,
+    commentFiles: new Map<number, { fileUrl: string; fileName: string; fileType?: string }>()
   }),
+  getters: {
+    getFileUrl: (state) => (commentId: number) => {
+      return state.commentFiles.get(commentId)?.fileUrl || undefined;
+    },
+    getFileName: (state) => (commentId: number) => {
+      return state.commentFiles.get(commentId)?.fileName || 'Tệp đính kèm';
+    },
+    getFileType: (state) => (commentId: number) => {
+      return state.commentFiles.get(commentId)?.fileType || undefined
+    }
+  },
   actions: {
     async fetchComments(taskId: number) {
       this.loading = true
       this.error = null
       try {
         this.comments = await fetchComments(taskId)
+        if (this.comments) {
+          this.comments = this.comments.map(comment => ({
+            ...comment,
+            taskId: taskId
+          }));
+
+          for (const comment of this.comments) {
+              await this.fetchCommentFile(taskId, comment.commentId)
+          }
+        }
       } catch (error: unknown) {
         if (error instanceof Error && 'response' in error) {
           const responseError = error as { response?: { data?: { message?: string } } }
@@ -26,11 +48,11 @@ export const useCommentsStore = defineStore('comments', {
       }
     },
 
-    async createComment(taskId: number, commentText: string) {
+    async createComment(taskId: number, commentText: string, file?: File) {
       this.loading = true
       this.error = null
       try {
-        await createComment(taskId, commentText)
+        await createComment(taskId, commentText, file)
         // Reload comments after creating
         await this.fetchComments(taskId)
       } catch (error: unknown) {
@@ -80,6 +102,8 @@ export const useCommentsStore = defineStore('comments', {
         if (this.comments) {
           this.comments = this.comments.filter((c: Comment) => c.commentId !== commentId)
         }
+        // Remove any stored file for this comment
+        this.commentFiles.delete(commentId)
       } catch (error: unknown) {
         if (error instanceof Error && 'response' in error) {
           const responseError = error as { response?: { data?: { message?: string } } }
@@ -93,28 +117,22 @@ export const useCommentsStore = defineStore('comments', {
       }
     },
 
-    async addFileByCommentId(formData: FormData) {
-      this.loading = true;
-      this.error = null;
+    async fetchCommentFile(taskId: number, commentId: number) {
       try {
-        await addFileByCommentId(formData);
+        const fileData = await getCommentFile(taskId, commentId)
 
-        // Get the taskId from formData to reload comments
-        const taskId = formData.get('taskId');
-        if (taskId) {
-          await this.fetchComments(Number(taskId));
+        if (fileData?.fileUrl) {
+          // Ghi lại file vào Map theo commentId
+          this.commentFiles.set(commentId, {
+            fileUrl: fileData.fileUrl,
+            fileName: fileData.fileName || 'Tệp đính kèm',
+            fileType: fileData.fileType
+          })
         }
-      } catch (error: unknown) {
-        if (error instanceof Error && 'response' in error) {
-          const responseError = error as { response?: { data?: { message?: string } } };
-          this.error = responseError.response?.data?.message || 'Không thể tạo bình luận với tệp đính kèm';
-        } else {
-          this.error = 'Không thể tạo bình luận với tệp đính kèm';
-        }
-        throw error;
-      } finally {
-        this.loading = false;
+      } catch (error) {
+        console.warn(`Không thể tải file đính kèm cho comment ${commentId}`, error)
       }
-    },
-  },
+    }
+
+  }
 })

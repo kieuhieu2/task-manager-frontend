@@ -6,4 +6,6 @@ export interface Comment {
   commentText: string
   createdAt?: string
   updatedAt?: string
+  fileName?: string
+  commentFile?: File
 }

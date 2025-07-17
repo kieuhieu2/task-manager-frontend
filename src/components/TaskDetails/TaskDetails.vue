@@ -90,7 +90,11 @@
       </div>
 
       <div class="comments-section">
-        <div class="comment-item" v-for="comment in comments" :key="comment.commentId">
+        <div
+          class="comment-item"
+          v-for="comment in commentStore.comments"
+          :key="comment.commentId"
+        >
           <div v-if="editingCommentId === comment.commentId">
             <input v-model="editedCommentText" />
             <div class="edit-controls">
@@ -102,17 +106,45 @@
             <div>
               <p>{{ comment.commentText }}</p>
               <span>{{ comment.userName }}</span>
+
+              <!-- 📎 Hiển thị file nếu có -->
+              <div
+                v-if="commentStore.getFileUrl(comment.commentId)"
+                class="comment-attachment"
+              >
+                <a
+                  :href="commentStore.getFileUrl(comment.commentId)"
+                  target="_blank"
+                  class="file-download-btn"
+                  download
+                >
+                  <span class="file-icon">📎</span>
+                  <span class="file-name">
+                {{ commentStore.getFileName(comment.commentId) }}
+              </span>
+                </a>
+              </div>
             </div>
+
             <div class="comment-actions" v-if="comment.userCode === currentUserCode">
               <button @click="handleEditClick(comment.commentId, comment.commentText)">Sửa</button>
               <button @click="handleDeleteComment(comment.commentId)">Xóa</button>
             </div>
           </div>
         </div>
-
         <h3>Ghi chú</h3>
         <div class="comment-input">
           <input v-model="newComment" type="text" placeholder="Bạn có ghi chú gì về công việc này ..." />
+          <input
+            type="file"
+            ref="commentFileInput"
+            style="display: none"
+            @change="handleCommentFileChange"
+          />
+          <button class="file-attach-btn" @click="triggerFileInput" title="Đính kèm tệp">
+            📎
+          </button>
+          <span v-if="commentFile" class="selected-file">{{ commentFile.name }}</span>
           <button @click="submitComment">Gửi</button>
         </div>
       </div>
@@ -135,16 +167,11 @@
 import { onMounted, ref, watch, computed } from 'vue'
 import type { Task } from '@/types/task';
 import { useTaskStore } from '@/stores/taskStore.js';
-import { createComment, fetchComments, updateComment, deleteComment } from '@/api/commentApi.js';
+import { useCommentsStore } from '@/stores/commentStore.js';
+import { updateComment, deleteComment } from '@/api/commentApi.js';
 import { updatePercentDone, updateTask } from '@/api/task.js';
 import WorkProgressOfMenberLayout from '@/components/WorkProgressOfMenberLayout.vue';
-
-interface Comment {
-  commentId: number;
-  commentText: string;
-  userName: string;
-  userCode: string;
-}
+import type { Comment } from '@/types/comment';
 
 const formatDeadline = (deadline?: string): string => {
   if (!deadline) return 'Không có hạn chót';
@@ -179,8 +206,11 @@ const editingCommentId = ref<number | null>(null);
 const editedCommentText = ref<string>('');
 const showProgressView = ref(false);
 const isUpdatingPercent = ref(false);
+const commentFile = ref<File | null>(null);
+const commentFileInput = ref<HTMLInputElement | null>(null);
 
 const taskStore = useTaskStore();
+const commentStore = useCommentsStore();
 
 const canUpdatePercentDone = computed(() => {
   return !!props.task && !!props.task.userId;
@@ -208,8 +238,9 @@ watch(() => props.task, async (newTask) => {
 
 const loadComments = async (taskId: number) => {
   try {
-    const result = await fetchComments(taskId);
-    comments.value = result as unknown as Comment[];
+    await commentStore.fetchComments(taskId);
+    comments.value = commentStore.comments as Comment[];
+    console.log('Loaded comments:', comments.value);
   } catch (error) {
     console.error('Không thể tải comment:', error);
   }
@@ -295,16 +326,17 @@ const reloadFile = async () => {
 };
 
 const submitComment = async () => {
-  if (!newComment.value.trim()) {
-    alert('Comment cannot be empty');
+  if (!newComment.value.trim() && !commentFile.value) {
+    alert('Comment hoặc file không được để trống');
     return;
   }
 
   try {
-    await createComment(props.task?.taskId || 0, newComment.value);
+    await commentStore.createComment(props.task?.taskId || 0, newComment.value, commentFile.value || undefined);
     alert('Comment submitted successfully');
     newComment.value = '';
-    await loadComments(props.task?.taskId || 0)
+    commentFile.value = null;
+    await loadComments(props.task?.taskId || 0);
   } catch (error) {
     console.error('Error submitting comment:', error);
     alert('Failed to submit comment');
@@ -401,6 +433,19 @@ const toggleProgressView = () => {
 const updateSliderBackground = () => {
   // This function is empty because the computed property sliderStyle automatically updates
   // when editedTask.percentDone changes during dragging
+};
+
+const triggerFileInput = () => {
+  if (commentFileInput.value) {
+    commentFileInput.value.click();
+  }
+};
+
+const handleCommentFileChange = (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  if (input.files && input.files.length > 0) {
+    commentFile.value = input.files[0];
+  }
 };
 </script>
 
