@@ -112,6 +112,25 @@
                   {{ comment.userName }}
                 </span>
               </div>
+
+              <!-- File attachment display -->
+              <div
+                v-if="commentStore.getFileUrl(comment.commentId)"
+                class="comment-attachment"
+              >
+                <a
+                  :href="commentStore.getFileUrl(comment.commentId)"
+                  target="_blank"
+                  class="file-download-btn"
+                  download
+                >
+                  <span class="file-icon">📎</span>
+                  <span class="file-name">
+                    {{ commentStore.getFileName(comment.commentId) }}
+                  </span>
+                </a>
+              </div>
+
               <div class="comment-actions" v-if="comment.userCode === userCode">
                 <button class="action-link edit-link" @click="handleEditClick(comment.commentId, comment.commentText)">
                   Sửa
@@ -210,6 +229,7 @@ import { useCommentsStore } from '@/stores/commentStore.js';
 import { updatePercentDone, updateTaskState } from '@/api/task.js';
 import type { Task } from '@/types/task.js';
 import { TaskState } from '@/types/task.js';
+import { createComment } from '@/api/commentApi.js';
 
 // Props and emits
 const props = defineProps<{
@@ -460,26 +480,15 @@ const submitComment = async () => {
   if (!newComment.value.trim() && !commentFile.value) return;
 
   try {
-    if (commentFile.value) {
-      // Call API to add file with comment
-      const formData = new FormData();
-      formData.append('taskId', props.task.taskId.toString());
-      formData.append('commentText', newComment.value);
-      formData.append('file', commentFile.value);
-
-      // TODO: Replace with actual API call
-      // await commentStore.addFileByCommnentId(formData);
-      console.log('Adding comment with file:', formData);
-    } else {
-      // Use existing API for text-only comments
-      await commentStore.createComment(props.task.taskId, newComment.value);
-    }
+    // Use the createComment API which supports both text-only and file attachments
+    await createComment(props.task.taskId, newComment.value, commentFile.value || undefined);
 
     // Reset form
     newComment.value = '';
     commentFile.value = null;
 
-    // Comments are already reloaded by the store actions
+    // Reload comments after adding a new one
+    await loadComments(props.task.taskId);
   } catch (error) {
     console.error('Error submitting comment:', error);
   }
@@ -799,8 +808,7 @@ onMounted(async () => {
 }
 
 .file-download-btn {
-  background-color: #4CAF50;
-  color: white;
+  color: black;
   border: none;
   padding: 6px 12px;
   border-radius: 4px;
@@ -1044,6 +1052,30 @@ onMounted(async () => {
   margin-top: 4px;
 }
 
+/* Comment attachment styles */
+.comment-attachment {
+  margin-top: 8px;
+  background-color: #f0f7ff;
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+.file-download-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.file-icon {
+  font-size: 18px;
+}
+
+.file-name {
+  font-size: 13px;
+  word-break: break-all;
+}
+
 .edit-textarea {
   width: 100%;
   padding: 8px;
@@ -1116,8 +1148,8 @@ onMounted(async () => {
 
 .status-option.active {
   background-color: #e8f5e9;
-  border-color: #28a745;
-  color: #28a745;
+  border-color: #92cfa1;
+  color: #92cfa1;
   font-weight: 600;
 }
 </style>
